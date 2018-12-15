@@ -59,20 +59,13 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Mock<StaticState> s = new Mock<StaticState>();
             Mock<Interpretation> i = new Mock<Interpretation>();
 
-            // Act
-            WorldRepresentation rep1 = new WorldRepresentation(s.Object, null, i.Object);
-
             // Assert - Exception is Expected
+            Assert.Throws<Exception>(() => new WorldRepresentation(s.Object, null, i.Object));
         }
 
         [Test]
         public void Contructor_ReceivesNoStaticState_ThrowsException() {
-            // Arrange
-
-            // Act
-            WorldRepresentation rep1 = new WorldRepresentation(null);
-
-            // Assert - Exception is Expected
+            Assert.Throws<Exception>(() => new WorldRepresentation(null));
         }
 
         [Test]
@@ -82,7 +75,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Mock<Interpretation> i = new Mock<Interpretation>();
 
             // Act
-            WorldRepresentation rep1 = new WorldRepresentation(null, d.Object);
+            Assert.Throws<Exception>(() => new WorldRepresentation(null, d.Object));
 
             // Assert - Exception is Expected
         }
