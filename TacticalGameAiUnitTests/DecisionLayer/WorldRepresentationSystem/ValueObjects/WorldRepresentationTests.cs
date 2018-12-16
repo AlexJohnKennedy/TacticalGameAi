@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using Moq;
 using System;
+using System.Reflection;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 
 namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueObjects {
@@ -60,12 +61,12 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Mock<Interpretation> i = new Mock<Interpretation>();
 
             // Assert - Exception is Expected
-            Assert.Throws<Exception>(() => new WorldRepresentation(s.Object, null, i.Object));
+            ArgumentNullException e = Assert.Throws<ArgumentNullException>(() => new WorldRepresentation(s.Object, null, i.Object));
         }
 
         [Test]
         public void Contructor_ReceivesNoStaticState_ThrowsException() {
-            Assert.Throws<Exception>(() => new WorldRepresentation(null));
+            Assert.Throws<ArgumentNullException>(() => new WorldRepresentation(null));
         }
 
         [Test]
@@ -75,7 +76,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Mock<Interpretation> i = new Mock<Interpretation>();
 
             // Act
-            Assert.Throws<Exception>(() => new WorldRepresentation(null, d.Object));
+            Assert.Throws<ArgumentNullException>(() => new WorldRepresentation(null, d.Object));
 
             // Assert - Exception is Expected
         }

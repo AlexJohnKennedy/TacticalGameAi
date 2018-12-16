@@ -23,7 +23,10 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
         // Constructors
         public WorldRepresentation(StaticState staticState, DynamicState dynamicState = null, Interpretation interpretation = null) {
-            StaticState = staticState;
+            StaticState = staticState ?? throw new ArgumentNullException("staticState", "ERROR: Tried to instantiate a new WorldRepresentation with no Static State. This is illegal because Dynamic-State information and Interpretation information both depend on Static State information");
+            if (dynamicState == null && interpretation != null) {
+                throw new ArgumentNullException("dynamicState", "ERROR: Tried to instantiate a new WorldRepresentation with Interpretation but no Dynamic State. This is illegal because Interpretation information depends on Dynamic State information");
+            }
             DynamicState = dynamicState;
             Interpretation = interpretation;
         }
@@ -34,7 +37,5 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         }
         public WorldRepresentation(WorldRepresentation other, DynamicState dynamicState, Interpretation interpretation) : this(other, null, dynamicState, interpretation) { }
         public WorldRepresentation(WorldRepresentation other, Interpretation interpretation) : this(other, null, null, interpretation) { }
-
-
     }
 }
