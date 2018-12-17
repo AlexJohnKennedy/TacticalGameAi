@@ -9,10 +9,14 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
     [TestFixture]
     class WorldRepresentationTests {
 
+        // Dummy arrays needed to satisfy the StaticState constructor, so that we can simply just mock them.
+        private StaticState.AreaNode[] arr = new StaticState.AreaNode[1];
+        private StaticState.AreaEdge[,] arr2 = new StaticState.AreaEdge[1,1];
+
         [Test]
         public void Contructor_ReceivesThreeComponents_ReturnsSameInstances() {
             // Arrange
-            Mock<StaticState> s = new Mock<StaticState>();
+            Mock<StaticState> s = new Mock<StaticState>(arr,arr2);
             Mock<DynamicState> d = new Mock<DynamicState>();
             Mock<Interpretation> i = new Mock<Interpretation>();
 
@@ -28,7 +32,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         [Test]
         public void Contructor_ReceivesNoInterpretation_ReturnsSameInstances() {
             // Arrange
-            Mock<StaticState> s = new Mock<StaticState>();
+            Mock<StaticState> s = new Mock<StaticState>(arr,arr2);
             Mock<DynamicState> d = new Mock<DynamicState>();
 
             // Act
@@ -43,7 +47,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         [Test]
         public void Contructor_ReceivesOnlyStaticState_ReturnsSameInstances() {
             // Arrange
-            Mock<StaticState> s = new Mock<StaticState>();
+            Mock<StaticState> s = new Mock<StaticState>(arr,arr2);
 
             // Act
             WorldRepresentation rep1 = new WorldRepresentation(s.Object);
@@ -57,7 +61,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         [Test]
         public void Contructor_ReceivesInterpretationButNoDynamicState_ThrowsException() {
             // Arrange
-            Mock<StaticState> s = new Mock<StaticState>();
+            Mock<StaticState> s = new Mock<StaticState>(arr,arr2);
             Mock<Interpretation> i = new Mock<Interpretation>();
 
             // Assert - Exception is Expected
@@ -84,7 +88,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         [Test]
         public void Contructor_CopiesOtherWorldRepresentation_CorrectlyCopiesAllMembers() {
             // Arrange
-            Mock<StaticState> s = new Mock<StaticState>();
+            Mock<StaticState> s = new Mock<StaticState>(arr,arr2);
             Mock<DynamicState> d = new Mock<DynamicState>();
             Mock<DynamicState> d2 = new Mock<DynamicState>();
             Mock<Interpretation> i = new Mock<Interpretation>();
