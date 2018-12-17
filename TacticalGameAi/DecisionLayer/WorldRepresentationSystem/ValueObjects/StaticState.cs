@@ -19,7 +19,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public bool OverwatchLocation { get; }  // BOOL - Is this area somewhere which observes over a large number of different general areas?
 
             // Private constructor, so that only the surrounding class can access it
-            private AreaNode(int nodeId, int generalAreaId, int concealmentLevel, bool chokepoint, int tacticalValue, int exposureLevel, bool deadEnd, bool junction, bool overwatchLocation) {
+            public AreaNode(int nodeId, int generalAreaId, int concealmentLevel, bool chokepoint, int tacticalValue, int exposureLevel, bool deadEnd, bool junction, bool overwatchLocation) {
                 NodeId = nodeId;
                 GeneralAreaId = generalAreaId;
                 ConcealmentLevel = concealmentLevel;
@@ -82,5 +82,67 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             }
         }
 
+        // Public Interface - Directly get all Vertex and Edge data
+        public AreaNode GetNodeData(int nodeId) {
+            // For performance, this value is not checked.
+            return areaNodes[nodeId];
+        }
+        public AreaEdge GetEdge(int fromNode, int toNode) {
+            // For performance, this value is not checked.
+            return areaEdges[fromNode, toNode];
+        }
+
+        // Public Interface - Get a function which gains access to a subset of the vertex data in the graph
+        public Func<int, int> GeneralAreaReader() {
+            return nodeid => areaNodes[nodeid].GeneralAreaId;
+        }
+        public Func<int, int> CoverLevelReader() {
+            return node => areaNodes[node].CoverLevel;
+        }
+        public Func<int, int> ConcealmentLevelReader() {
+            return node => areaNodes[node].ConcealmentLevel;
+        }
+        public Func<int, int> TacticalValueReader() {
+            return node => areaNodes[node].TacticalValue;
+        }
+        public Func<int, int> ExposureLevelReader() {
+            return node => areaNodes[node].ExposureLevel;
+        }
+        public Func<int, bool> IsChokepointReader() {
+            return node => areaNodes[node].Chokepoint;
+        }
+        public Func<int, bool> IsDeadEndReader() {
+            return node => areaNodes[node].DeadEnd;
+        }
+        public Func<int, bool> IsJunctionReader() {
+            return node => areaNodes[node].Junction;
+        }
+        public Func<int, bool> IsOverwatchLocation() {
+            return node => areaNodes[node].OverwatchLocation;
+        }
+
+        // Public Interface - Get a function which gains access to a subset of the edge data in the graph
+        public Func<int, int, bool> CanSeeReader() {
+            return (from, to) => areaEdges[from, to].CanSee;
+        }
+        public Func<int, int, bool> IsConnectedReader() {
+            return (from, to) => areaEdges[from, to].IsConnected;
+        }
+        public Func<int, int, bool> HasControlOverReader() {
+            return (from, to) => areaEdges[from, to].HasControlOver;
+        }
+        public Func<int, int, int> RelativeCoverLevelReader() {
+            return (from, to) => areaEdges[from, to].RelativeCoverLevel
+;
+        }
+        public Func<int, int, int> CombatAdvantageReader() {
+            return (from, to) => areaEdges[from, to].CombatAdvantage;
+        }
+        public Func<int, int, float> DistanceReader() {
+            return (from, to) => areaEdges[from, to].Distance;
+        }
+        public Func<int, int, float> MinimumHearableVolumeReader() {
+            return (from, to) => areaEdges[from, to].MinimumHearableVolume;
+        }
     }
 }
