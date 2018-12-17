@@ -21,8 +21,8 @@ using System.Text;
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects.UnderlyingNodeData {
     readonly struct WorldData {
         // World data is generically represented as a graph; Nodes and Edges.
-        NodeStateData[] Nodes { get; }
-        NodeRelationshipData[,] Edges { get; }
+        public NodeStateData[] Nodes { get; }
+        public NodeRelationshipData[,] Edges { get; }
 
         public WorldData(NodeStateData[] nodes, NodeRelationshipData[,] edges) {
             Nodes = nodes ?? throw new ArgumentNullException("nodes", "ERROR: Tried to create new WorldData struct but nodes array was null");
@@ -37,24 +37,20 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects.Un
     }
 
     readonly struct NodeStateData {
-        readonly int nodeId;
-        readonly int nodeType;
-        readonly int[] stateData;
+        readonly public int nodeId;
+        readonly public int[] stateData;
 
         public NodeStateData(int nodeId, int nodeType, int[] stateData) {
             if (nodeId < 0) { throw new ArgumentOutOfRangeException("nodeId", "ERROR: Attempted to build a NodeStateData struct but the nodeId was less than zero"); }
             this.nodeId = nodeId;
-            this.nodeType = nodeType;
             this.stateData = stateData ?? throw new ArgumentNullException("stateData", "ERROR: Attempted to build a NodeStateData struct but the statedata array was null");
         }
     }
 
     readonly struct NodeRelationshipData {
-        readonly int fromNodeId;
-        readonly int toNodeId;
-        readonly int fromNodeType;
-        readonly int toNodeType;
-        readonly int[] edgeData;
+        readonly public int fromNodeId;
+        readonly public int toNodeId;
+        readonly public int[] edgeData;
 
         public NodeRelationshipData(int fromNodeId, int toNodeId, int fromNodeType, int toNodeType, int[] edgeData) {
             if (fromNodeId == toNodeId) throw new ArgumentException("ERROR: Attempted to build a NodeRelationshipData struct but FromNodeID and ToNodeID were the same. This is illegal because a Node should not have an edge to itself.");
@@ -62,8 +58,6 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects.Un
             if (toNodeId < 0) throw new ArgumentOutOfRangeException("toNodeId", "ERROR: Tried to instantiate a NodeRelationshipData struct with a toNodeId less than zero");
             this.fromNodeId = fromNodeId;
             this.toNodeId = toNodeId;
-            this.fromNodeType = fromNodeType;
-            this.toNodeType = toNodeType;
             this.edgeData = edgeData ?? throw new ArgumentNullException("edgeData","ERROR: Attempted to build a NodeRelationshipData struct but the edgedata array was null");
         }
     }
