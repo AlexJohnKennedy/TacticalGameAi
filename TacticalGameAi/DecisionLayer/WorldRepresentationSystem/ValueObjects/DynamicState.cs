@@ -156,18 +156,12 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 }
 
                 // Finally, build the damn data objects!
-                areaNodes[i] = new AreaNode(i, friendlyPresence[i], enemyPresence[i], dangerLevel[i], isDangerSourceKnown[i], unknownPresence[i], isClear[i], isControlledByTeam[i], visibleToEnemies[i], potentialEnemies[i], isControlledByEnemy[i]);
+                nodes[i] = new AreaNode(i, friendlyPresence[i], enemyPresence[i], dangerLevel[i], isDangerSourceKnown[i], unknownPresence[i], isClear[i], isControlledByTeam[i], visibleToEnemies[i], potentialEnemies[i], isControlledByEnemy[i]);
                 for (int j=0; j<n; j++) {
-                    areaEdges[i, j] = new AreaEdge(i, j, causingClear[i, j], causingControlled[i, j], causingControlledByEnemy[i, j], causingVisibleToEnemies[i, j], causingPotentialEnemies[i, j]);
+                    edges[i, j] = new AreaEdge(i, j, causingClear[i, j], causingControlled[i, j], causingControlledByEnemy[i, j], causingVisibleToEnemies[i, j], causingPotentialEnemies[i, j]);
                 }
             }
         }
-
-
-
-
-
-
 
         /* Class which is used by clients to read the current state of a Node. Data is not stored in this manner
          * since DynamicState has internal relationships required to update itself correctly and facilitate
