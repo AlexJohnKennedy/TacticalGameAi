@@ -36,15 +36,17 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
         public DynamicState(FactSet[] facts) {
             areaFacts = facts ?? throw new ArgumentNullException("facts", "Dynamic State received null fact array.");
+            areaEffects = new EffectSet[facts.Length];
 
             // Build redundent wrapper data
             areaNodes = new AreaNode[facts.Length];
             areaEdges = new AreaEdge[facts.Length, facts.Length];
 
-            PopulateRedundentArrays(facts, areaNodes, areaEdges);
+            // This function fully creates redundunt 'fact' objects for every node and edge. This should make querying the Dynamic state faster but make building a new State very slow.
+            FullyPopulateRedundentArrays(facts, areaNodes, areaEdges);   // TOO SLOW AND FINICKY
         }
 
-        private void PopulateRedundentArrays(FactSet[] facts, AreaNode[] nodes, AreaEdge[,] edges) {
+        private void FullyPopulateRedundentArrays(FactSet[] facts, AreaNode[] nodes, AreaEdge[,] edges) {
             // We assume that the facts in each node's FactSet are valid; I.e., the world updator has not passed us multiple facts as true when they are mutually exclusive!
 
             // Store all area data in temp arrays so we can construct the data fully before instantiating the immutable wrapper objects.
@@ -71,10 +73,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
             // EFFECT HASHSETS
             HashSet<Effect>[] esets = new HashSet<Effect>[n];
-
+            for (int i = 0; i < n; i++) { esets[i] = new HashSet<Effect>(); }
             for (int i = 0; i < n; i++) {
-                esets[i] = new HashSet<Effect>();
-
                 // Use all the facts in the set to populate the fact based data.
                 foreach (Fact fact in facts[i]) {
                     // Store knowledge of this fact in node i
@@ -130,8 +130,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             }
 
             // Do pass on aggregated effects to remove precluded effect states.
-            for (int i=0; i<n;i++) {
+            for (int i=0; i<n; i++) {
                 areaEffects[i] = new EffectSet(esets[i]);
+                
                 foreach(Effect e in esets[i]) {
                     foreach(EffectType t in e.PrecludedEffectTypes) {
                         // EffectType 't' is being caused, but is precluded from node 'i' // TODO: MAKE THE FACT THAT AN EFFECT STATE IS CAUSED BUT PRECLUDED VISIBLE TO CLIENTS?
