@@ -7,40 +7,84 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
     public class DynamicState {
 
         // The original representation of data
-        private HashSet<Fact>[] areaFacts;         // Each Node can have a number of facts.
-        private HashSet<Effect>[] areaEffects;
+        private Dictionary<FactType, Fact>[] areaFacts;
+        private Dictionary<EffectType, EffectSum>[] areaEffects;
 
-        // Redundent representation of info built upon construction to allow clients faster lookups to the current info
+        // Redundent representation of info built upon construction to allow clients faster lookups to info we have already calculated.
         private AreaNode[]  areaNodes;
         private AreaEdge[,] areaEdges;
 
-        // Used by anyone who wants to update the world. Note that the WorldUpdator must be doing this via the World Rep
-        // to also have access to the underlying StaticState!
-        public IReadOnlyCollection<IEnumerable<Fact>> AreaFacts {
-            get { return Array.AsReadOnly(areaFacts); }
-        }
-        public IReadOnlyCollection<IEnumerable<Effect>> AreaEffects {
-            get { return Array.AsReadOnly(areaEffects); }
-        }
-
         // Public Interface - Directly get all Vertex and Edge data
         public AreaNode GetNodeData(int nodeId) {
-            // For performance, this value is not checked.
+            if (areaNodes[nodeId] == null) areaNodes[nodeId] = new AreaNode();
             return areaNodes[nodeId];
         }
         public AreaEdge GetEdge(int fromNode, int toNode) {
-            // For performance, these values are not checked.
+            if (areaEdges[fromNode, toNode] == null) areaEdges[fromNode, toNode] = new AreaEdge();
             return areaEdges[fromNode, toNode];
         }
 
-        public DynamicState(HashSet<Fact>[] facts) {
+        public DynamicState(Dictionary<FactType, Fact>[] facts) {
             areaFacts = facts ?? throw new ArgumentNullException("facts", "Dynamic State received null fact array.");
-            areaEffects = new HashSet<Effect>[facts.Length];
-
-            // Build redundent wrapper data
+            areaEffects = new Dictionary<EffectType, EffectSum>[facts.Length];
+            for (int i=0; i<facts.Length; i++) { areaEffects[i] = new Dictionary<EffectType, EffectSum>(); }
             areaNodes = new AreaNode[facts.Length];
             areaEdges = new AreaEdge[facts.Length, facts.Length];
+
+            // Populate EffectSum dictionaries for each node, to identify all the effects they have on each node.
+            foreach (Dictionary<FactType,Fact> dict in facts) {
+                foreach (Fact f in dict.Values) {
+                    foreach (Effect e in f.EffectsCaused) {
+                        AddEffectToEffectSum(e.NodeId, e);
+                    }
+                }
+            }
         }
+        private void AddEffectToEffectSum(int node, Effect e) {
+            EffectSum sumObj = areaEffects[node][e.EffectType];
+            if (sumObj != null) {
+                sumObj.IncorporateNewEffect(e);
+            }
+            else {
+                areaEffects[node].Add(e.EffectType, new EffectSum(e));
+            }
+        }
+
+        // Public Interface - Clients can request reader functions to read a subset of the graph. This describes the Fact reader functions.
+        private Func<int, int> FactValueReaderFunction(FactType type) {
+            return n => areaFacts[n][type] == null ? 0 : areaFacts[n][type].Value;
+        }
+        private Func<int, bool> FactTruthReaderFunction(FactType type) {
+            return n => areaFacts[n][type] != null;
+        }
+        public Func<int, int> KnownEnemyPresenceReader() {
+            return FactValueReaderFunction(FactType.EnemyPresence);
+        }
+        public Func<int, int> KnownFriendlyPresenceReader() {
+            return FactValueReaderFunction(FactType.FriendlyPresence);
+        }
+        public Func<int, int> KnownDangerLevelReader() {
+            // Danger levels are reported as the sum of all Facts which signal 'danger'.
+            return n => FactValueReaderFunction(FactType.Danger)(n) + FactValueReaderFunction(FactType.DangerFromUnknownSource)(n);
+        }
+        public Func<int, bool> HasDangerFromUnknownSourceReader() {
+            return FactTruthReaderFunction(FactType.DangerFromUnknownSource);
+        }
+        public Func<int, bool> HasNoKnownPresenceReader() {
+            return n => !FactTruthReaderFunction(FactType.FriendlyPresence)(n) && !FactTruthReaderFunction(FactType.EnemyPresence)(n);
+        }
+        public Func<int, bool> IsFriendlyAreaReader() {
+            return n => FactTruthReaderFunction(FactType.FriendlyPresence)(n) && !FactTruthReaderFunction(FactType.EnemyPresence)(n);
+        }
+        public Func<int, bool> IsEnemyAreaReader() {
+            return n => !FactTruthReaderFunction(FactType.FriendlyPresence)(n) && FactTruthReaderFunction(FactType.EnemyPresence)(n);
+        }
+        public Func<int, bool> IsContestedAreaReader() {
+            return n => FactTruthReaderFunction(FactType.FriendlyPresence)(n) && FactTruthReaderFunction(FactType.EnemyPresence)(n);
+        }
+
+        // Public Interface - Clients can request reader function to read a subset of the graph. This describes the Effect reader function, which require preclusion table lookups.
+        
 
         /* Class which is used by clients to read the current state of a Node. Data is not stored in this manner
          * since DynamicState has internal relationships required to update itself correctly and facilitate
@@ -53,9 +97,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
          * to make decisions based on our state rules, since those are unstable. */
         public class AreaNode {
             public int NodeId { get; }
-            
-            // DYNAMIC FACTS
-            public int FriendlyPresence { get; }   // The known number of friendly units in this area.
+
+            // The known number of friendly units in this area.
+            public int FriendlyPresence { get; }
             public int EnemyPresence { get; }      // The known number of enemy units in this area.
             public int DangerLevel { get; }         // The amount of 'Danger' the unit has observed in the area. (E.g. witnessing a death in that spot)
             public bool IsDangerSourceKnown { get; }// True if there is danger but no known source of that danger.
@@ -76,20 +120,6 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public bool VisibleToEnemies { get; }   // Visible from an area with known enemies.
             public bool PotentialEnemies { get; }
             public bool IsControlledByEnemies { get; }
-
-            public AreaNode(int nodeId, int friendlyPresence, int enemyPresence, int dangerLevel, bool isDangerSourceKnown, bool unknownPresence, bool isClear, bool isControlledByTeam, bool visibleToEnemies, bool potentialEnemies, bool isControlledByEnemies) {
-                NodeId = nodeId;
-                FriendlyPresence = friendlyPresence;
-                EnemyPresence = enemyPresence;
-                DangerLevel = dangerLevel;
-                IsDangerSourceKnown = isDangerSourceKnown;
-                UnknownPresence = unknownPresence;
-                IsClear = isClear;
-                IsControlledByTeam = isControlledByTeam;
-                VisibleToEnemies = visibleToEnemies;
-                PotentialEnemies = potentialEnemies;
-                IsControlledByEnemies = isControlledByEnemies;
-            }
         }
 
         /* Class which is used by clients to read the edge data of a node pair. Data is not stored in this manner
@@ -104,16 +134,6 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public bool IsCausingControlledByEnemiesState { get; }
             public bool IsCausingVisibleToEnemiesState { get; }
             public bool IsCausingPotentialEnemiesState { get; }
-
-            public AreaEdge(int fromNodeId, int toNodeId, bool isCausingClearedState, bool isCausingControlledState, bool isCausingControlledByEnemiesState, bool isCausingVisibleToEnemiesState, bool isCausingPotentialEnemiesState) {
-                FromNodeId = fromNodeId;
-                ToNodeId = toNodeId;
-                IsCausingClearedState = isCausingClearedState;
-                IsCausingControlledState = isCausingControlledState;
-                IsCausingControlledByEnemiesState = isCausingControlledByEnemiesState;
-                IsCausingVisibleToEnemiesState = isCausingVisibleToEnemiesState;
-                IsCausingPotentialEnemiesState = isCausingPotentialEnemiesState;
-            }
         }
     }
 }
@@ -125,6 +145,64 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 /// presenting a generic interface to the client objects).
 /// </summary>
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHiddenTypes {
+
+    public enum FactType {
+        FriendlyPresence,
+        EnemyPresence,
+        UnknownPresence,
+        Danger,
+        DangerFromUnknownSource
+    }
+    public enum EffectType {
+        Clear,
+        Controlled,
+        VisibleToEnemies,
+        PotentialEnemies,
+        ControlledByEnemy
+    }
+
+    // Serves as a hardcoded lookup table which defines which types of effects preclude other types of effects from being true,
+    // and which effects are automatically true given particular facts, and so on. Defined here so that this logic is centrally controlled and
+    // does not concern the WorldUpdater Modules; it is modelled here since this logic is purely semantic (how the dynamic state model is defined).
+    // TODO: 5 - Fact and Effect hardcoded relationships should be set up by reading a config file. Probably a structured data file (JSON, XML, etc.)
+    // TODO: 5 - Implement more expressive Fact and Effect relationships. Atm, it's only what is automatically 'true' and 'false' depending on 1 to many relationship. Should eventually be able to make an effect true or false based on a conjunction of other facts and effects!
+    public static class FactAndEffectRules {
+        private static HashSet<EffectType>[] effectPreclusionTable;     // Which effects are precluded by each given effect.
+        private static HashSet<EffectType>[] factInclusionTable;        // Which effects are included by each given fact.
+        private static HashSet<EffectType>[] factPreclusionTable;       // Which effects are precluded by each given fact. Preclusion supersedes Inclusion.
+        static FactAndEffectRules() {
+            effectPreclusionTable = new HashSet<EffectType>[Enum.GetNames(typeof(EffectType)).Length];     // Number of EffectTypes
+            effectPreclusionTable[(int)EffectType.Clear] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
+            effectPreclusionTable[(int)EffectType.Controlled] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
+            effectPreclusionTable[(int)EffectType.ControlledByEnemy] = new HashSet<EffectType>(new EffectType[] { } );
+            effectPreclusionTable[(int)EffectType.VisibleToEnemies] = new HashSet<EffectType>(new EffectType[] { } );
+            effectPreclusionTable[(int)EffectType.PotentialEnemies] = new HashSet<EffectType>(new EffectType[] { } );
+
+            factInclusionTable = new HashSet<EffectType>[Enum.GetNames(typeof(FactType)).Length];    // Number of FactTypes
+            factInclusionTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled });
+            factInclusionTable[(int)FactType.EnemyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.VisibleToEnemies });
+            factInclusionTable[(int)FactType.UnknownPresence] = new HashSet<EffectType>(new EffectType[] { });
+            factInclusionTable[(int)FactType.Danger] = new HashSet<EffectType>(new EffectType[] { });
+            factInclusionTable[(int)FactType.DangerFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies });
+
+            factPreclusionTable = new HashSet<EffectType>[Enum.GetNames(typeof(FactType)).Length];  // Number of FactTypes
+            factPreclusionTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.PotentialEnemies });
+            factPreclusionTable[(int)FactType.EnemyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.ControlledByEnemy });
+            factPreclusionTable[(int)FactType.UnknownPresence] = new HashSet<EffectType>(new EffectType[] { });
+            factPreclusionTable[(int)FactType.Danger] = new HashSet<EffectType>(new EffectType[] { });
+            factPreclusionTable[(int)FactType.DangerFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { });
+        }
+
+        public static HashSet<EffectType> GetPrecludedEffectTypes(EffectType e) {
+            return effectPreclusionTable[(int)e];
+        }
+        public static HashSet<EffectType> GetPrecludedEffectTypes(FactType f) {
+            return factPreclusionTable[(int)f];
+        }
+        public static HashSet<EffectType> GetIncludedEffectTypes(FactType f) {
+            return factInclusionTable[(int)f];
+        }
+    }
 
     public class Fact {
         public FactType FactType { get; private set; }   // Identifies what kind of fact this is! The enum is not to be visible outside of the WorldRepresentation Module.
@@ -155,23 +233,51 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
         }
     }
 
-    public enum FactType {
-        FriendlyPresence,
-        EnemyPresence,
-        UnknownPresence,
-        Danger,
-        DangerFromUnknownSource
+    // Represents the aggregation of multiple same-type effects, when the same 'effect type' is applied to a node from more than one origin.
+    // MUTABLE - MUST NOT BE EXPOSED TO CLIENTS
+    public class EffectSum {
+        public EffectType? EffectType { get; set; }
+        public int ValueSum { get; set; }
+        public int MaxValue { get; set; }
+        public List<int> CauseNodes { get; }
+        public void IncorporateNewEffect(Effect e) {
+            CauseNodes.Add(e.CauseNodeId);
+            if (EffectType == null) {
+                // This is the first incorporated effect!
+                EffectType = e.EffectType;
+                ValueSum = MaxValue = e.Value;
+            }
+            else if (EffectType == e.EffectType) {
+                ValueSum += e.Value;
+                MaxValue = MaxValue > e.Value ? MaxValue : e.Value;
+            }
+            else { throw new ArgumentException("EffectSum cannot incorporate Effect objects with different EffectTypes"); }
+        }
+        public EffectSum() {
+            CauseNodes = new List<int>();
+            EffectType = null;
+        }
+        public EffectSum(Effect e) {
+            CauseNodes = new List<int>();
+            IncorporateNewEffect(e);
+        }
+        public EffectSum(IEnumerable<Effect> es) {
+            CauseNodes = new List<int>();
+            foreach (Effect e in es) IncorporateNewEffect(e);
+        }
     }
 
     public class Effect {
         public EffectType EffectType { get; private set; }
         public int Value { get; private set; }
         public int NodeId { get; private set; }
+        public int CauseNodeId { get; private set; }
 
-        public Effect(EffectType effectType, int value, int nodeId) {
+        public Effect(EffectType effectType, int value, int affectedNodeId, int causeNodeId) {
             EffectType = effectType;
             Value = value;
-            NodeId = nodeId;
+            NodeId = affectedNodeId;
+            CauseNodeId = causeNodeId;
         }
 
         public override bool Equals(object obj) {
@@ -183,21 +289,17 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
                 return false;
             }
         }
+        public override int GetHashCode() {
+            return EffectType.GetHashCode() * 17 + Value.GetHashCode() * 17 + NodeId.GetHashCode();
+        }
 
         public sealed class MutableEffect : Effect {
-            public MutableEffect(EffectType effectType, int value, int nodeId) : base(effectType, value, nodeId) { }
-            public MutableEffect(Effect toClone) : base(toClone.EffectType, toClone.Value, toClone.NodeId) { }
+            public MutableEffect(EffectType effectType, int value, int nodeId, int causeId) : base(effectType, value, nodeId, causeId) { }
+            public MutableEffect(Effect toClone) : base(toClone.EffectType, toClone.Value, toClone.NodeId, toClone.CauseNodeId) { }
             public void SetEffectType(EffectType e) { EffectType = e; }
             public void SetValue(int v) { Value = v; }
             public void SetNodeId(int n) { NodeId = n; }
+            public void SetCauseId(int n) { CauseNodeId = n; }
         }
-    }
-
-    public enum EffectType {
-        Clear,
-        Controlled,
-        VisibleToEnemies,
-        PotentialEnemies,
-        ControlledByEnemy
     }
 }

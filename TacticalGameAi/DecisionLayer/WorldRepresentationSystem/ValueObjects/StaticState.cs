@@ -70,7 +70,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         private AreaNode[] areaNodes;
         private AreaEdge[,] areaEdges;
 
-        // TODO: Add Obstacle graph creation and storage. Obstacle graph is applied on top of base area data to modify return results.
+        // TODO: 6 - Add Obstacle graph creation and storage. Obstacle graph is applied on top of base area data to modify return results, essentially acting as an additional 'filter'.
+        // TODO: 7 - Implement the ability to read a structured data file (JSON, XML) containing a WorldRepresentation configuration in order to build the StaticState/DynamicState. This will be essential for testing the system!
         public StaticState(AreaNode[] nodes, AreaEdge[,] edges) {
             areaNodes = nodes ?? throw new ArgumentNullException("nodes", "ERROR: Tried to create new StaticState but nodes array was null");
             areaEdges = edges ?? throw new ArgumentNullException("edges", "ERROR: Tried to create new StaticState but edges array was null");

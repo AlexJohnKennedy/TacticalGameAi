@@ -2,8 +2,7 @@
 using Moq;
 using System;
 using System.Reflection;
-using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
-using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHiddenTypes;
+using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects.OLDSTUFF;
 using System.Collections.Generic;
 
 namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueObjects {
