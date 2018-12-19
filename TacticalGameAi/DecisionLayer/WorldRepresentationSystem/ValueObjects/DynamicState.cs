@@ -84,7 +84,12 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         }
 
         // Public Interface - Clients can request reader function to read a subset of the graph. This describes the Effect reader function, which require preclusion table lookups.
-        
+        private Func<int, bool> EffectTruthReaderFunction(EffectType type) {
+            return n => {
+                // For this to be true, the effect type must directly be present in the node's EffectSum, or it has a fact which includes it.
+                if (areaEffects[n].ContainsKey(type) || areaFacts[n].
+            }
+        }
 
         /* Class which is used by clients to read the current state of a Node. Data is not stored in this manner
          * since DynamicState has internal relationships required to update itself correctly and facilitate
@@ -167,40 +172,75 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
     // TODO: 5 - Fact and Effect hardcoded relationships should be set up by reading a config file. Probably a structured data file (JSON, XML, etc.)
     // TODO: 5 - Implement more expressive Fact and Effect relationships. Atm, it's only what is automatically 'true' and 'false' depending on 1 to many relationship. Should eventually be able to make an effect true or false based on a conjunction of other facts and effects!
     public static class FactAndEffectRules {
-        private static HashSet<EffectType>[] effectPreclusionTable;     // Which effects are precluded by each given effect.
-        private static HashSet<EffectType>[] factInclusionTable;        // Which effects are included by each given fact.
-        private static HashSet<EffectType>[] factPreclusionTable;       // Which effects are precluded by each given fact. Preclusion supersedes Inclusion.
+        private static HashSet<EffectType>[] effectsPrecludedByEffectTable;     // Which effects are precluded by each given effect.
+        private static HashSet<EffectType>[] effectsIncludedByFactTable;        // Which effects are included by each given fact.
+        private static HashSet<EffectType>[] effectsPrecludedByFactTable;       // Which effects are precluded by each given fact. Preclusion supersedes Inclusion.
+
+        private static HashSet<EffectType>[] effectsWhichPrecludeTable;         // Which effects preclude a given effect.
+        private static HashSet<FactType>[] factsWhichPrecludeTable;             // Which facts preclude a given effect. Preclusion supersedes Inclusion.
+        private static HashSet<FactType>[] factsWhichIncludeTable;              // Which facts include a given effect.
         static FactAndEffectRules() {
-            effectPreclusionTable = new HashSet<EffectType>[Enum.GetNames(typeof(EffectType)).Length];     // Number of EffectTypes
-            effectPreclusionTable[(int)EffectType.Clear] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
-            effectPreclusionTable[(int)EffectType.Controlled] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
-            effectPreclusionTable[(int)EffectType.ControlledByEnemy] = new HashSet<EffectType>(new EffectType[] { } );
-            effectPreclusionTable[(int)EffectType.VisibleToEnemies] = new HashSet<EffectType>(new EffectType[] { } );
-            effectPreclusionTable[(int)EffectType.PotentialEnemies] = new HashSet<EffectType>(new EffectType[] { } );
+            effectsPrecludedByEffectTable = new HashSet<EffectType>[Enum.GetNames(typeof(EffectType)).Length];     // Number of EffectTypes
+            effectsPrecludedByEffectTable[(int)EffectType.Clear] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
+            effectsPrecludedByEffectTable[(int)EffectType.Controlled] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
+            effectsPrecludedByEffectTable[(int)EffectType.ControlledByEnemy] = new HashSet<EffectType>(new EffectType[] { } );
+            effectsPrecludedByEffectTable[(int)EffectType.VisibleToEnemies] = new HashSet<EffectType>(new EffectType[] { } );
+            effectsPrecludedByEffectTable[(int)EffectType.PotentialEnemies] = new HashSet<EffectType>(new EffectType[] { } );
 
-            factInclusionTable = new HashSet<EffectType>[Enum.GetNames(typeof(FactType)).Length];    // Number of FactTypes
-            factInclusionTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled });
-            factInclusionTable[(int)FactType.EnemyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.VisibleToEnemies });
-            factInclusionTable[(int)FactType.UnknownPresence] = new HashSet<EffectType>(new EffectType[] { });
-            factInclusionTable[(int)FactType.Danger] = new HashSet<EffectType>(new EffectType[] { });
-            factInclusionTable[(int)FactType.DangerFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies });
+            effectsIncludedByFactTable = new HashSet<EffectType>[Enum.GetNames(typeof(FactType)).Length];    // Number of FactTypes
+            effectsIncludedByFactTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled });
+            effectsIncludedByFactTable[(int)FactType.EnemyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.VisibleToEnemies });
+            effectsIncludedByFactTable[(int)FactType.UnknownPresence] = new HashSet<EffectType>(new EffectType[] { });
+            effectsIncludedByFactTable[(int)FactType.Danger] = new HashSet<EffectType>(new EffectType[] { });
+            effectsIncludedByFactTable[(int)FactType.DangerFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies });
 
-            factPreclusionTable = new HashSet<EffectType>[Enum.GetNames(typeof(FactType)).Length];  // Number of FactTypes
-            factPreclusionTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.PotentialEnemies });
-            factPreclusionTable[(int)FactType.EnemyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.ControlledByEnemy });
-            factPreclusionTable[(int)FactType.UnknownPresence] = new HashSet<EffectType>(new EffectType[] { });
-            factPreclusionTable[(int)FactType.Danger] = new HashSet<EffectType>(new EffectType[] { });
-            factPreclusionTable[(int)FactType.DangerFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { });
+            effectsPrecludedByFactTable = new HashSet<EffectType>[Enum.GetNames(typeof(FactType)).Length];  // Number of FactTypes
+            effectsPrecludedByFactTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.PotentialEnemies });
+            effectsPrecludedByFactTable[(int)FactType.EnemyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled });
+            effectsPrecludedByFactTable[(int)FactType.UnknownPresence] = new HashSet<EffectType>(new EffectType[] { });
+            effectsPrecludedByFactTable[(int)FactType.Danger] = new HashSet<EffectType>(new EffectType[] { });
+            effectsPrecludedByFactTable[(int)FactType.DangerFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { });
+
+            effectsWhichPrecludeTable = new HashSet<EffectType>[Enum.GetNames(typeof(EffectType)).Length];
+            effectsWhichPrecludeTable[(int)EffectType.PotentialEnemies] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled });
+            effectsWhichPrecludeTable[(int)EffectType.Clear] = new HashSet<EffectType>(new EffectType[] { });
+            effectsWhichPrecludeTable[(int)EffectType.Controlled] = new HashSet<EffectType>(new EffectType[] { });
+            effectsWhichPrecludeTable[(int)EffectType.VisibleToEnemies] = new HashSet<EffectType>(new EffectType[] { });
+            effectsWhichPrecludeTable[(int)EffectType.ControlledByEnemy] = new HashSet<EffectType>(new EffectType[] { });
+
+            factsWhichIncludeTable = new HashSet<FactType>[Enum.GetNames(typeof(EffectType)).Length];
+            factsWhichIncludeTable[(int)EffectType.PotentialEnemies] = new HashSet<FactType>(new FactType[] { FactType.DangerFromUnknownSource });
+            factsWhichIncludeTable[(int)EffectType.Clear] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence });
+            factsWhichIncludeTable[(int)EffectType.Controlled] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence });
+            factsWhichIncludeTable[(int)EffectType.VisibleToEnemies] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
+            factsWhichIncludeTable[(int)EffectType.ControlledByEnemy] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
+
+            factsWhichPrecludeTable = new HashSet<FactType>[Enum.GetNames(typeof(EffectType)).Length];
+            factsWhichPrecludeTable[(int)EffectType.PotentialEnemies] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence });
+            factsWhichPrecludeTable[(int)EffectType.Clear] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
+            factsWhichPrecludeTable[(int)EffectType.Controlled] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
+            factsWhichPrecludeTable[(int)EffectType.VisibleToEnemies] = new HashSet<FactType>(new FactType[] {  });
+            factsWhichPrecludeTable[(int)EffectType.ControlledByEnemy] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence });
         }
 
-        public static HashSet<EffectType> GetPrecludedEffectTypes(EffectType e) {
-            return effectPreclusionTable[(int)e];
+        public static HashSet<EffectType> GetEffectsPrecludedByEffect(EffectType e) {
+            return effectsPrecludedByEffectTable[(int)e];
         }
-        public static HashSet<EffectType> GetPrecludedEffectTypes(FactType f) {
-            return factPreclusionTable[(int)f];
+        public static HashSet<EffectType> GetEffectsPrecludedByFact(FactType f) {
+            return effectsPrecludedByFactTable[(int)f];
         }
-        public static HashSet<EffectType> GetIncludedEffectTypes(FactType f) {
-            return factInclusionTable[(int)f];
+        public static HashSet<EffectType> GetEffectsIncludedByFact(FactType f) {
+            return effectsIncludedByFactTable[(int)f];
+        }
+
+        public static HashSet<EffectType> EffectsWhichPreclude(EffectType e) {
+            return effectsWhichPrecludeTable[(int)e];
+        }
+        public static HashSet<FactType> FactsWhichPreclude(EffectType e) {
+            return factsWhichPrecludeTable[(int)e];
+        }
+        public static HashSet<FactType> FactsWhichInclude(EffectType e) {
+            return factsWhichIncludeTable[(int)e];
         }
     }
 
