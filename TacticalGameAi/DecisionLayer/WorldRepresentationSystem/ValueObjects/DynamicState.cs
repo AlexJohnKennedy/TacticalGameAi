@@ -83,13 +83,27 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             return n => FactTruthReaderFunction(FactType.FriendlyPresence)(n) && FactTruthReaderFunction(FactType.EnemyPresence)(n);
         }
 
+        // TODO - 8 TEST THIS LOGIC: Coded after midnight and is highly finnickey with the names so there are problemy bugs all over the fucking place.
         // Public Interface - Clients can request reader function to read a subset of the graph. This describes the Effect reader function, which require preclusion table lookups.
         private Func<int, bool> EffectTruthReaderFunction(EffectType type) {
             return n => {
                 // For this to be true, the effect type must directly be present in the node's EffectSum, or it has a fact which includes it.
-                if (areaEffects[n].ContainsKey(type) || areaFacts[n].
-            }
+                if (areaEffects[n].ContainsKey(type) || FactAndEffectRules.FactsWhichInclude(type).Overlaps(areaFacts[n].Keys)) {
+                    // If there are ALSO any effects or facts hwich preclude it, then we still must return false since preclusion supersedes inclusion in the current model.
+                    if (FactAndEffectRules.EffectsWhichPreclude(type).Overlaps(areaEffects[n].Keys) || FactAndEffectRules.FactsWhichPreclude(type).Overlaps(areaFacts[n].Keys)) {
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                }
+                else {
+                    return false;
+                }
+            };
         }
+        public Func<int, bool> 
+        
 
         /* Class which is used by clients to read the current state of a Node. Data is not stored in this manner
          * since DynamicState has internal relationships required to update itself correctly and facilitate
