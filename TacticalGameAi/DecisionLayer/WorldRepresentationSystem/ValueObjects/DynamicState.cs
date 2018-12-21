@@ -8,7 +8,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
         // The original representation of data
         private Dictionary<FactType, Fact>[] areaFacts;
-        private Dictionary<EffectType, EffectSum>[] areaEffects;
+        private Dictionary<EffectType, EffectSum>[] areaEffectSums;
+        private List<Effect>[,] areaEffects;
 
         // Redundent representation of info built upon construction to allow clients faster lookups to info we have already calculated.
         private AreaNode[]  areaNodes;
@@ -26,8 +27,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
         public DynamicState(Dictionary<FactType, Fact>[] facts) {
             areaFacts = facts ?? throw new ArgumentNullException("facts", "Dynamic State received null fact array.");
-            areaEffects = new Dictionary<EffectType, EffectSum>[facts.Length];
-            for (int i=0; i<facts.Length; i++) { areaEffects[i] = new Dictionary<EffectType, EffectSum>(); }
+            areaEffectSums = new Dictionary<EffectType, EffectSum>[facts.Length];
+            for (int i=0; i<facts.Length; i++) { areaEffectSums[i] = new Dictionary<EffectType, EffectSum>(); }
+            areaEffects = new List<Effect>[facts.Length, facts.Length];
             areaNodes = new AreaNode[facts.Length];
             areaEdges = new AreaEdge[facts.Length, facts.Length];
 
@@ -36,17 +38,19 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 foreach (Fact f in dict.Values) {
                     foreach (Effect e in f.EffectsCaused) {
                         AddEffectToEffectSum(e.NodeId, e);
+                        if (areaEffects[e.CauseNodeId, e.NodeId] == null) { areaEffects[e.CauseNodeId, e.NodeId] = new List<Effect>(); }
+                        areaEffects[e.CauseNodeId, e.NodeId].Add(e);
                     }
                 }
             }
         }
         private void AddEffectToEffectSum(int node, Effect e) {
-            EffectSum sumObj = areaEffects[node][e.EffectType];
+            EffectSum sumObj = areaEffectSums[node][e.EffectType];
             if (sumObj != null) {
                 sumObj.IncorporateNewEffect(e);
             }
             else {
-                areaEffects[node].Add(e.EffectType, new EffectSum(e));
+                areaEffectSums[node].Add(e.EffectType, new EffectSum(e));
             }
         }
 
@@ -88,9 +92,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         private Func<int, bool> EffectTruthReaderFunction(EffectType type) {
             return n => {
                 // For this to be true, the effect type must directly be present in the node's EffectSum, or it has a fact which includes it.
-                if (areaEffects[n].ContainsKey(type) || FactAndEffectRules.FactsWhichInclude(type).Overlaps(areaFacts[n].Keys)) {
+                if (areaEffectSums[n].ContainsKey(type) || FactAndEffectRules.FactsWhichInclude(type).Overlaps(areaFacts[n].Keys)) {
                     // If there are ALSO any effects or facts which preclude it, then we still must return false since preclusion supersedes inclusion in the current model.
-                    if (FactAndEffectRules.EffectsWhichPreclude(type).Overlaps(areaEffects[n].Keys) || FactAndEffectRules.FactsWhichPreclude(type).Overlaps(areaFacts[n].Keys)) {
+                    if (FactAndEffectRules.EffectsWhichPreclude(type).Overlaps(areaEffectSums[n].Keys) || FactAndEffectRules.FactsWhichPreclude(type).Overlaps(areaFacts[n].Keys)) {
                         return false;
                     }
                     else {
@@ -116,6 +120,31 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         }
         public Func<int, bool> IsControlledByEnemiesReader() {
             return EffectTruthReaderFunction(EffectType.ControlledByEnemy);
+        }
+
+        private Func<int, int, bool> EdgeDataReaderFunction(EffectType type) {
+            return (from, to) => {
+                if (areaEffects[from, to] == null) return false;
+                foreach(Effect e in areaEffects[from,to]) {
+                    if (e.EffectType == type) return true;
+                }
+                return false;
+            };
+        }
+        public Func<int, int, bool> CausingClearEffectReader() {
+            return EdgeDataReaderFunction(EffectType.Clear);
+        }
+        public Func<int, int, bool> CausingControlledByTeamEffectReader() {
+            return EdgeDataReaderFunction(EffectType.Controlled);
+        }
+        public Func<int, int, bool> CausingControlledByEnemiesEffectReader() {
+            return EdgeDataReaderFunction(EffectType.ControlledByEnemy);
+        }
+        public Func<int, int, bool> CausingVisibleToEnemiesEffectReader() {
+            return EdgeDataReaderFunction(EffectType.VisibleToEnemies);
+        }
+        public Func<int, int, bool> CausingPotentialEnemiesEffectReader() {
+            return EdgeDataReaderFunction(EffectType.PotentialEnemies);
         }
         
 
@@ -271,7 +300,16 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         public class AreaEdge {
             public int FromNodeId { get; }          // 'This' node (A)
             public int ToNodeId { get; }            // 'That' node (B)
-            
+
+            private bool isCausingClearEffect;
+            private bool isCausingControlledByTeamEffect;
+            private bool isCausingControlledByEnemiesEffect;
+            private bool isCausingVisibleToEnemiesEffect;
+            private bool isCausingPotentialEnemiesEffect;
+
+            private Func<int, int, bool> causingClearEffectReader; ...continue as before
+
+            // OLD DELETE AFTER
             public bool IsCausingClearedState { get; }        // Is A causing B to be clear?
             public bool IsCausingControlledState { get; }
             public bool IsCausingControlledByEnemiesState { get; }
