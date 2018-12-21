@@ -16,7 +16,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
         // Public Interface - Directly get all Vertex and Edge data
         public AreaNode GetNodeData(int nodeId) {
-            if (areaNodes[nodeId] == null) areaNodes[nodeId] = new AreaNode();
+            if (areaNodes[nodeId] == null) areaNodes[nodeId] = new AreaNode(nodeId, KnownFriendlyPresenceReader(), KnownEnemyPresenceReader(), KnownDangerLevelReader(), HasDangerFromUnknownSourceReader(), HasNoKnownPresenceReader(), IsFriendlyAreaReader(), IsEnemyAreaReader(), IsContestedAreaReader(), IsClearReader(), IsControlledByTeamReader(), IsControlledByEnemiesReader(), VisibleToEnemiesReader(), PotentialEnemiesReader());
             return areaNodes[nodeId];
         }
         public AreaEdge GetEdge(int fromNode, int toNode) {
