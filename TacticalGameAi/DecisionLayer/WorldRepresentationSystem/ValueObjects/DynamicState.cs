@@ -89,7 +89,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             return n => {
                 // For this to be true, the effect type must directly be present in the node's EffectSum, or it has a fact which includes it.
                 if (areaEffects[n].ContainsKey(type) || FactAndEffectRules.FactsWhichInclude(type).Overlaps(areaFacts[n].Keys)) {
-                    // If there are ALSO any effects or facts hwich preclude it, then we still must return false since preclusion supersedes inclusion in the current model.
+                    // If there are ALSO any effects or facts which preclude it, then we still must return false since preclusion supersedes inclusion in the current model.
                     if (FactAndEffectRules.EffectsWhichPreclude(type).Overlaps(areaEffects[n].Keys) || FactAndEffectRules.FactsWhichPreclude(type).Overlaps(areaFacts[n].Keys)) {
                         return false;
                     }
@@ -102,7 +102,21 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 }
             };
         }
-        public Func<int, bool> 
+        public Func<int, bool> IsClearReader() {
+            return EffectTruthReaderFunction(EffectType.Clear);
+        }
+        public Func<int, bool> IsControlledByTeamReader() {
+            return EffectTruthReaderFunction(EffectType.Controlled);
+        }
+        public Func<int, bool> VisibleToEnemiesReader() {
+            return EffectTruthReaderFunction(EffectType.VisibleToEnemies);
+        }
+        public Func<int, bool> PotentialEnemiesReader() {
+            return EffectTruthReaderFunction(EffectType.VisibleToEnemies);
+        }
+        public Func<int, bool> IsControlledByEnemiesReader() {
+            return EffectTruthReaderFunction(EffectType.ControlledByEnemy);
+        }
         
 
         /* Class which is used by clients to read the current state of a Node. Data is not stored in this manner
@@ -117,28 +131,138 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         public class AreaNode {
             public int NodeId { get; }
 
-            // The known number of friendly units in this area.
-            public int FriendlyPresence { get; }
-            public int EnemyPresence { get; }      // The known number of enemy units in this area.
-            public int DangerLevel { get; }         // The amount of 'Danger' the unit has observed in the area. (E.g. witnessing a death in that spot)
-            public bool IsDangerSourceKnown { get; }// True if there is danger but no known source of that danger.
-            public bool UnknownPresence { get; }
-            public bool IsFriendlyArea {            // True if there are no known enemies in the area, but there are known friendlies
-                get { return FriendlyPresence > 0 && EnemyPresence <= 0; }
+            // Cached values for this node. Nullable values since upon creation of this object they have not been looked up yet.
+            private int? friendlyPresence;
+            private int? enemyPresence;
+            private int? dangerLevel;
+            private bool? hasDangerFromUnknownSource;
+            private bool? unknownPresence;
+            private bool? isFriendlyArea;
+            private bool? isEnemyArea;
+            private bool? isContestedArea;
+            private bool? isClear;
+            private bool? isControlledByTeam;
+            private bool? isControlledByEnemies;
+            private bool? visibleToEnemies;
+            private bool? potentialEnemies;
+
+            // Lookup functions, used to lookup data values if they have not been cached yet.
+            private Func<int, int> friendlyPresenceReader;
+            private Func<int, int> enemyPresenceReader;
+            private Func<int, int> dangerLevelReader;
+            private Func<int, bool> hasDangerFromUnknownSourceReader;
+            private Func<int, bool> unknownPresenceReader;
+            private Func<int, bool> isFriendlyAreaReader;
+            private Func<int, bool> isEnemyAreaReader;
+            private Func<int, bool> isContestedAreaReader;
+            private Func<int, bool> isClearReader;
+            private Func<int, bool> isControlledByTeamReader;
+            private Func<int, bool> isControlledByEnemiesReader;
+            private Func<int, bool> visibleToEnemiesReader;
+            private Func<int, bool> potentialEnemiesReader;
+
+            // Public Properties which clients will use to query data about this node!
+            public int FriendlyPresence {
+                get {
+                    if (friendlyPresence == null) { friendlyPresence = friendlyPresenceReader(NodeId); }
+                    return friendlyPresence.Value;
+                }
             }
-            public bool IsEnemyArea {               // True if there are known enemies in the area, but no friendlies
-                get { return FriendlyPresence <= 0 && EnemyPresence > 0; }
+            public int EnemyPresence {
+                get {
+                    if (enemyPresence == null) { enemyPresence = enemyPresenceReader(NodeId); }
+                    return enemyPresence.Value;
+                }
             }
-            public bool IsContestedArea {           // True if there are currently both friendlies and enemies in the same area.
-                get { return FriendlyPresence > 0 && EnemyPresence > 0; }
+            public int DangerLevel {
+                get {
+                    if (dangerLevel == null) { dangerLevel = dangerLevelReader(NodeId); }
+                    return dangerLevel.Value;
+                }
             }
-            
-            // DYNAMIC EFFECTS
-            public bool IsClear { get; }            // Is visible to an area with friendlies in it and is not engaging in combat.
-            public bool IsControlledByTeam { get; } // Has a 'controlOver' relationship from a friendly controlled area.
-            public bool VisibleToEnemies { get; }   // Visible from an area with known enemies.
-            public bool PotentialEnemies { get; }
-            public bool IsControlledByEnemies { get; }
+            public bool HasDangerFromUnknownSource {
+                get {
+                    if (hasDangerFromUnknownSource == null) { hasDangerFromUnknownSource = hasDangerFromUnknownSourceReader(NodeId); }
+                    return hasDangerFromUnknownSource.Value;
+                }
+            }
+            public bool UnknownPresence {
+                get {
+                    if (unknownPresence == null) { unknownPresence = unknownPresenceReader(NodeId); }
+                    return unknownPresence.Value;
+                }
+            }
+            public bool IsFriendlyArea {
+                get {
+                    if (isFriendlyArea == null) isFriendlyArea = isFriendlyAreaReader(NodeId);
+                    return isFriendlyArea.Value;
+                }
+            }
+            public bool IsEnemyArea {
+                get {
+                    if (isEnemyArea == null) isEnemyArea = isEnemyAreaReader(NodeId);
+                    return isEnemyArea.Value;
+                }
+            }
+            public bool IsContestedArea {
+                get {
+                    if (isContestedArea == null) isContestedArea = isContestedAreaReader(NodeId);
+                    return isContestedArea.Value;
+                }
+            }
+            public bool IsClear {
+                get {
+                    if (isClear == null) isClear = isClearReader(NodeId);
+                    return isClear.Value;
+                }
+            }
+            public bool IsControlledByTeam {
+                get {
+                    if (isControlledByTeam == null) isControlledByTeam = isControlledByTeamReader(NodeId);
+                    return isControlledByTeam.Value;
+                }
+            }
+            public bool IsControlledByEnemies {
+                get {
+                    if (isControlledByEnemies == null) { isControlledByEnemies = isControlledByEnemiesReader(NodeId); }
+                    return isControlledByEnemies.Value;
+                }
+            }
+            public bool VisibleToEnemies {
+                get {
+                    if (visibleToEnemies == null) visibleToEnemies = visibleToEnemiesReader(NodeId);
+                    return visibleToEnemies.Value;
+                }
+            }
+            public bool PotentialEnemies {
+                get {
+                    if (potentialEnemies == null) potentialEnemies = potentialEnemiesReader(NodeId);
+                    return potentialEnemies.Value;
+                }
+            }
+
+            // Constructor with horrificly long paramter list, but it's fine coz it's only used in one location.
+            public AreaNode(int nodeId, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> unknownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader) {
+                NodeId = nodeId;
+                this.friendlyPresenceReader = friendlyPresenceReader;
+                this.enemyPresenceReader = enemyPresenceReader;
+                this.dangerLevelReader = dangerLevelReader;
+                this.hasDangerFromUnknownSourceReader = hasDangerFromUnknownSourceReader;
+                this.unknownPresenceReader = unknownPresenceReader;
+                this.isFriendlyAreaReader = isFriendlyAreaReader;
+                this.isEnemyAreaReader = isEnemyAreaReader;
+                this.isContestedAreaReader = isContestedAreaReader;
+                this.isClearReader = isClearReader;
+                this.isControlledByTeamReader = isControlledByTeamReader;
+                this.isControlledByEnemiesReader = isControlledByEnemiesReader;
+                this.visibleToEnemiesReader = visibleToEnemiesReader;
+                this.potentialEnemiesReader = potentialEnemiesReader;
+
+                // All cached values should be automatically initialised to null, since they are fields.
+            }
+
+            // Constructor
+
         }
 
         /* Class which is used by clients to read the edge data of a node pair. Data is not stored in this manner
