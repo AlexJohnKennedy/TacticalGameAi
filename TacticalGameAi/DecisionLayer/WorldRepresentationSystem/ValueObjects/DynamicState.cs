@@ -25,6 +25,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             return areaEdges[fromNode, toNode];
         }
 
+        /* TODO: 7 - Implement a constructor which allows the WorldUpdater object (or whoever is building this) to pass in a pre-made Effect edge matrix and a pre-made EffectSum array.
+         * This would probably be more efficient because the world updater can just build these collections as it searches to apply effects, rather than re-doing to work in the DS constructor
+         * as is currently the case (in the triple nested for-each loop inside the current one. */
         public DynamicState(Dictionary<FactType, Fact>[] facts) {
             areaFacts = facts ?? throw new ArgumentNullException("facts", "Dynamic State received null fact array.");
             areaEffectSums = new Dictionary<EffectType, EffectSum>[facts.Length];
@@ -86,7 +89,6 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             return n => FactTruthReaderFunction(FactType.FriendlyPresence)(n) && FactTruthReaderFunction(FactType.EnemyPresence)(n);
         }
 
-        // TODO - 8 TEST THIS LOGIC: Coded after midnight and is highly finnickey with the names so there are problemy bugs all over the fucking place.
         // Public Interface - Clients can request reader function to read a subset of the graph. This describes the Effect reader function, which require preclusion table lookups.
         private Func<int, bool> EffectTruthReaderFunction(EffectType type) {
             return n => {
