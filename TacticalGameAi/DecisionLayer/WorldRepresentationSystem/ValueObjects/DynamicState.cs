@@ -21,7 +21,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             return areaNodes[nodeId];
         }
         public AreaEdge GetEdge(int fromNode, int toNode) {
-            if (areaEdges[fromNode, toNode] == null) areaEdges[fromNode, toNode] = new AreaEdge();
+            if (areaEdges[fromNode, toNode] == null) areaEdges[fromNode, toNode] = new AreaEdge(fromNode, toNode, CausingClearEffectReader(), CausingControlledByTeamEffectReader(), CausingControlledByEnemiesEffectReader(), CausingVisibleToEnemiesEffectReader(), CausingPotentialEnemiesEffectReader());
             return areaEdges[fromNode, toNode];
         }
 
@@ -289,9 +289,6 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
                 // All cached values should be automatically initialised to null, since they are fields.
             }
-
-            // Constructor
-
         }
 
         /* Class which is used by clients to read the edge data of a node pair. Data is not stored in this manner
@@ -301,20 +298,58 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public int FromNodeId { get; }          // 'This' node (A)
             public int ToNodeId { get; }            // 'That' node (B)
 
-            private bool isCausingClearEffect;
-            private bool isCausingControlledByTeamEffect;
-            private bool isCausingControlledByEnemiesEffect;
-            private bool isCausingVisibleToEnemiesEffect;
-            private bool isCausingPotentialEnemiesEffect;
+            private bool? isCausingClearEffect;
+            private bool? isCausingControlledByTeamEffect;
+            private bool? isCausingControlledByEnemiesEffect;
+            private bool? isCausingVisibleToEnemiesEffect;
+            private bool? isCausingPotentialEnemiesEffect;
 
-            private Func<int, int, bool> causingClearEffectReader; ...continue as before
+            private Func<int, int, bool> causingClearEffectReader;
+            private Func<int, int, bool> causingControlledByTeamEffectReader;
+            private Func<int, int, bool> causingControlledByEnemiesEffectReader;
+            private Func<int, int, bool> causingVisibleToEnemiesEffectReader;
+            private Func<int, int, bool> causingPotentialEnemiesEffectReader;
 
-            // OLD DELETE AFTER
-            public bool IsCausingClearedState { get; }        // Is A causing B to be clear?
-            public bool IsCausingControlledState { get; }
-            public bool IsCausingControlledByEnemiesState { get; }
-            public bool IsCausingVisibleToEnemiesState { get; }
-            public bool IsCausingPotentialEnemiesState { get; }
+            public bool IsCausingClearEffect {
+                get {
+                    if (isCausingClearEffect == null) isCausingClearEffect = causingClearEffectReader(FromNodeId, ToNodeId);
+                    return isCausingClearEffect.Value;
+                }
+            }
+            public bool IsCausingControlledByTeamEffect {
+                get {
+                    if (isCausingControlledByTeamEffect == null) isCausingControlledByTeamEffect = causingControlledByTeamEffectReader(FromNodeId, ToNodeId);
+                    return isCausingControlledByTeamEffect.Value;
+                }
+            }
+            public bool IsCausingControlledByEnemiesEffect {
+                get {
+                    if (isCausingControlledByEnemiesEffect == null) isCausingControlledByEnemiesEffect = causingControlledByEnemiesEffectReader(FromNodeId, ToNodeId);
+                    return isCausingControlledByEnemiesEffect.Value;
+                }
+            }
+            public bool IsCausingVisibleToEnemiesEffect {
+                get {
+                    if (isCausingVisibleToEnemiesEffect == null) isCausingVisibleToEnemiesEffect = causingVisibleToEnemiesEffectReader(FromNodeId, ToNodeId);
+                    return isCausingVisibleToEnemiesEffect.Value;
+                }
+            }
+            public bool IsCausingPotentialEnemiesEffect {
+                get {
+                    if (isCausingPotentialEnemiesEffect == null) isCausingPotentialEnemiesEffect = causingPotentialEnemiesEffectReader(FromNodeId, ToNodeId);
+                    return isCausingPotentialEnemiesEffect.Value;
+                }
+            }
+
+            public AreaEdge(int fromNodeId, int toNodeId, Func<int, int, bool> causingClearEffectReader, Func<int, int, bool> causingControlledByTeamEffectReader, Func<int, int, bool> causingControlledByEnemiesEffectReader, Func<int, int, bool> causingVisibleToEnemiesEffectReader, Func<int, int, bool> causingPotentialEnemiesEffectReader) {
+                FromNodeId = fromNodeId;
+                ToNodeId = toNodeId;
+                this.causingClearEffectReader = causingClearEffectReader;
+                this.causingControlledByTeamEffectReader = causingControlledByTeamEffectReader;
+                this.causingControlledByEnemiesEffectReader = causingControlledByEnemiesEffectReader;
+                this.causingVisibleToEnemiesEffectReader = causingVisibleToEnemiesEffectReader;
+                this.causingPotentialEnemiesEffectReader = causingPotentialEnemiesEffectReader;
+            }
         }
     }
 }
