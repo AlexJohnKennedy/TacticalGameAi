@@ -45,9 +45,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             }
         }
         private void AddEffectToEffectSum(int node, Effect e) {
-            EffectSum sumObj = areaEffectSums[node][e.EffectType];
-            if (sumObj != null) {
-                sumObj.IncorporateNewEffect(e);
+            if (areaEffectSums[node].ContainsKey(e.EffectType)) {
+                areaEffectSums[node][e.EffectType].IncorporateNewEffect(e);
             }
             else {
                 areaEffectSums[node].Add(e.EffectType, new EffectSum(e));
@@ -56,10 +55,10 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
         // Public Interface - Clients can request reader functions to read a subset of the graph. This describes the Fact reader functions.
         private Func<int, int> FactValueReaderFunction(FactType type) {
-            return n => areaFacts[n][type] == null ? 0 : areaFacts[n][type].Value;
+            return n => areaFacts[n].ContainsKey(type) ? areaFacts[n][type].Value : 0;
         }
         private Func<int, bool> FactTruthReaderFunction(FactType type) {
-            return n => areaFacts[n][type] != null;
+            return n => areaFacts[n].ContainsKey(type);
         }
         public Func<int, int> KnownEnemyPresenceReader() {
             return FactValueReaderFunction(FactType.EnemyPresence);
@@ -91,6 +90,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         // Public Interface - Clients can request reader function to read a subset of the graph. This describes the Effect reader function, which require preclusion table lookups.
         private Func<int, bool> EffectTruthReaderFunction(EffectType type) {
             return n => {
+
                 // For this to be true, the effect type must directly be present in the node's EffectSum, or it has a fact which includes it.
                 if (areaEffectSums[n].ContainsKey(type) || FactAndEffectRules.FactsWhichInclude(type).Overlaps(areaFacts[n].Keys)) {
                     // If there are ALSO any effects or facts which preclude it, then we still must return false since preclusion supersedes inclusion in the current model.
@@ -116,7 +116,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             return EffectTruthReaderFunction(EffectType.VisibleToEnemies);
         }
         public Func<int, bool> PotentialEnemiesReader() {
-            return EffectTruthReaderFunction(EffectType.VisibleToEnemies);
+            return EffectTruthReaderFunction(EffectType.PotentialEnemies);
         }
         public Func<int, bool> IsControlledByEnemiesReader() {
             return EffectTruthReaderFunction(EffectType.ControlledByEnemy);
@@ -271,7 +271,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             }
 
             // Constructor with horrificly long paramter list, but it's fine coz it's only used in one location.
-            public AreaNode(int nodeId, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> unknownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader) {
+            internal AreaNode(int nodeId, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> unknownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader) {
                 NodeId = nodeId;
                 this.friendlyPresenceReader = friendlyPresenceReader;
                 this.enemyPresenceReader = enemyPresenceReader;
@@ -341,7 +341,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 }
             }
 
-            public AreaEdge(int fromNodeId, int toNodeId, Func<int, int, bool> causingClearEffectReader, Func<int, int, bool> causingControlledByTeamEffectReader, Func<int, int, bool> causingControlledByEnemiesEffectReader, Func<int, int, bool> causingVisibleToEnemiesEffectReader, Func<int, int, bool> causingPotentialEnemiesEffectReader) {
+            internal AreaEdge(int fromNodeId, int toNodeId, Func<int, int, bool> causingClearEffectReader, Func<int, int, bool> causingControlledByTeamEffectReader, Func<int, int, bool> causingControlledByEnemiesEffectReader, Func<int, int, bool> causingVisibleToEnemiesEffectReader, Func<int, int, bool> causingPotentialEnemiesEffectReader) {
                 FromNodeId = fromNodeId;
                 ToNodeId = toNodeId;
                 this.causingClearEffectReader = causingClearEffectReader;
