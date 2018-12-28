@@ -55,6 +55,31 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 areaEffectSums[node].Add(e.EffectType, new EffectSum(e));
             }
         }
+        // Constructor which facilitates updating an old dynamic state with new changes more easily.
+        public DynamicState(DynamicState oldState, Dictionary<int, Dictionary<FactType, Fact>> changes) {
+            if (oldState == null) throw new ArgumentNullException("oldState", "Dynamic State received null old state in constructor");
+            // Copy all the old facts into new facts, unless it appears in the changes dict, in which case use the new one!
+            Dictionary<FactType, Fact>[] oldfacts = oldState.areaFacts;
+            areaFacts = new Dictionary<FactType, Fact>[oldfacts.Length];
+            for (int i=0; i < oldfacts.Length; i++) {
+                // Check if the i'th node is a node with 'changes'.
+                if (changes.ContainsKey(i)) {
+                    areaFacts[i] = changes[i];
+                }
+                else {
+                    areaFacts[i] = new Dictionary<FactType, Fact>(oldfacts[i]);
+                }
+
+                // Calculate the EffectSums
+                foreach (Fact f in areaFacts[i].Values) {
+                    foreach (Effect e in f.EffectsCaused) {
+                        AddEffectToEffectSum(e.NodeId, e);
+                        if (areaEffects[e.CauseNodeId, e.NodeId] == null) { areaEffects[e.CauseNodeId, e.NodeId] = new List<Effect>(); }
+                        areaEffects[e.CauseNodeId, e.NodeId].Add(e);
+                    }
+                }
+            }
+        }
 
         // Public Interface - Clients can request reader functions to read a subset of the graph. This describes the Fact reader functions.
         private Func<int, int> FactValueReaderFunction(FactType type) {
