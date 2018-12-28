@@ -4,7 +4,7 @@ using System.Text;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHiddenTypes;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 
-namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdator {
+namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSystem {
     /* This class is a generic 'fact adder'. Upon construction, it is passed in a fact type which is will apply and remove to specified nodes.
      * The fact adder contains a collection of 'effectadder' logic pieces which it delegates the task of applying subsesquent EFFECTS to, which occur
      * as a result of the Fact that was added. */
