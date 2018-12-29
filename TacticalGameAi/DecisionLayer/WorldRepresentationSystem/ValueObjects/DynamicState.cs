@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHiddenTypes;
+using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
     public class DynamicState {
@@ -10,6 +11,10 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         private Dictionary<FactType, Fact>[] areaFacts;
         private Dictionary<EffectType, EffectSum>[] areaEffectSums;
         private List<Effect>[,] areaEffects;
+
+        // Internal interface. Special priviledged objects can use these to read the internal data of a DynamicState (e.g. WorldUpdator Logic)
+        internal Dictionary<FactType, Fact> GetNodeFact(int id) { return areaFacts[id]; }
+        internal Dictionary<EffectType, EffectSum> GetNodeEffectSum(int id) { return areaEffectSums[id]; }
 
         // Redundent representation of info built upon construction to allow clients faster lookups to info we have already calculated.
         private AreaNode[]  areaNodes;
@@ -578,6 +583,18 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
             public void SetValue(int v) { Value = v; }
             public void SetNodeId(int n) { NodeId = n; }
             public void SetCauseId(int n) { CauseNodeId = n; }
+        }
+    }
+
+    // Specialised reader class allowing a client to read the actual 'FACT' objects which make up the internal representation of the dynamic state. Should
+    // only be used by objects who are priviledged enough to reference the other hidden types. A wrapper to access internal functions, such that you have to
+    // import a separate namespace (hiddentype namespace) to access them!
+    public static class DynamicStateInternalReader {
+        public static Dictionary<FactType, Fact> GetNodeFact(int id, DynamicState state) {
+            return state.GetNodeFact(id);
+        }
+        public static Dictionary<EffectType, EffectSum> GetNodeEffectSum(int id, DynamicState state) {
+            return state.GetNodeEffectSum(id);
         }
     }
 }
