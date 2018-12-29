@@ -18,7 +18,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         }
 
         // Public Interface.
-        public void AddFact(WorldRepresentation world, int node, int value, ref Dictionary<FactType, Fact.MutableFact> nodeFacts) {
+        public void AddFact(WorldRepresentation world, int node, int value, Dictionary<FactType, Fact.MutableFact> nodeFacts) {
             if (nodeFacts.ContainsKey(factType)) {
                 // Modify existing fact object's value, and that's it! The relevant effects should already exist, because the fact already exists.
                 nodeFacts[factType].SetValue(value);
@@ -32,7 +32,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                 }
             }
         }
-        public void RemoveFact(WorldRepresentation world, int node, ref Dictionary<FactType, Fact.MutableFact> nodeFactsToModify) {
+        public void RemoveFact(WorldRepresentation world, int node, Dictionary<FactType, Fact.MutableFact> nodeFactsToModify) {
             if (nodeFactsToModify.ContainsKey(factType)) {
                 nodeFactsToModify.Remove(factType);
             }
