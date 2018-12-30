@@ -65,7 +65,15 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             if (oldState == null) throw new ArgumentNullException("oldState", "Dynamic State received null old state in constructor");
             // Copy all the old facts into new facts, unless it appears in the changes dict, in which case use the new one!
             Dictionary<FactType, Fact>[] oldfacts = oldState.areaFacts;
-            areaFacts = new Dictionary<FactType, Fact>[oldfacts.Length];
+
+            int n = oldfacts.Length;
+            areaFacts = new Dictionary<FactType, Fact>[n];
+            areaEffectSums = new Dictionary<EffectType, EffectSum>[n];
+            for (int i = 0; i < n; i++) { areaEffectSums[i] = new Dictionary<EffectType, EffectSum>(); }
+            areaEffects = new List<Effect>[n, n];
+            areaNodes = new AreaNode[n];
+            areaEdges = new AreaEdge[n, n];
+
             for (int i=0; i < oldfacts.Length; i++) {
                 // Check if the i'th node is a node with 'changes'.
                 if (changes.ContainsKey(i)) {
@@ -74,9 +82,10 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 else {
                     areaFacts[i] = new Dictionary<FactType, Fact>(oldfacts[i]);
                 }
-
+            }
+            for (int i=0; i < oldfacts.Length; i++) {
                 // Calculate the EffectSums
-                foreach (Fact f in areaFacts[i].Values) {
+                foreach (Fact f in areaFacts[i].Values) {              
                     foreach (Effect e in f.EffectsCaused) {
                         AddEffectToEffectSum(e.NodeId, e);
                         if (areaEffects[e.CauseNodeId, e.NodeId] == null) { areaEffects[e.CauseNodeId, e.NodeId] = new List<Effect>(); }
@@ -592,6 +601,33 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
         }
         public static Dictionary<EffectType, EffectSum> GetNodeEffectSum(int id, DynamicState state) {
             return state.GetNodeEffectSum(id);
+        }
+    }
+
+    public static class DEBUG_DynamicStateLogger {
+        public static void PrintAreaFacts(Dictionary<FactType, Fact>[] areaFacts, string msg) {
+            Console.WriteLine(msg);
+            for (int i=0; i < areaFacts.Length; i++) {
+                Console.WriteLine("Node " + i + " facts:");
+                foreach (Fact f in areaFacts[i].Values) {
+                    PrintFactWithEffects(f,i);
+                }
+            }
+            Console.WriteLine("- - - - END - - - -");
+            Console.WriteLine("");
+        }
+
+        public static void PrintFactWithEffects(Fact f, int i) {
+            if (f == null) { Console.WriteLine("    NULL FACT - ERROR:"); return; }
+            Console.WriteLine("    Node " + i + " fact: " + f.FactType + " with value " + f.Value);
+            foreach (Effect e in f.EffectsCaused) {
+                PrintEffect(e);
+            }
+        }
+
+        public static void PrintEffect(Effect e) {
+            if (e == null) { Console.WriteLine("        NULL EFFECT - ERROR"); return; }
+            Console.WriteLine("        Effect: " + e.EffectType + " acts upon node " + e.NodeId + " with value " + e.Value);
         }
     }
 }
