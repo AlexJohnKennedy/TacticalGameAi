@@ -30,6 +30,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                 foreach (IEffectAdder adder in effectAdders) {
                     adder.AddEffects(world, node, f);
                 }
+                nodeFacts.Add(factType, f);
             }
         }
         public void RemoveFact(WorldRepresentation world, int node, Dictionary<FactType, Fact.MutableFact> nodeFactsToModify) {
