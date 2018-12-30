@@ -8,7 +8,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
     /* This class is a generic 'fact adder'. Upon construction, it is passed in a fact type which is will apply and remove to specified nodes.
      * The fact adder contains a collection of 'effectadder' logic pieces which it delegates the task of applying subsesquent EFFECTS to, which occur
      * as a result of the Fact that was added. */
-    class FactAdder {
+    public class FactAdder {
         private FactType factType;
         private IEnumerable<IEffectAdder> effectAdders;
 
@@ -39,7 +39,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         }
     }
 
-    interface IEffectAdder {
+    public interface IEffectAdder {
         void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject);
     }
 }

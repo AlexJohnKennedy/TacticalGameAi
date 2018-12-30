@@ -6,6 +6,15 @@ using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 
 namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
+    public static class WorldRep_ValueObjectMocker {
+        public static Mock<StaticState> NewStaticStateMock() {
+            return new Mock<StaticState>(new StaticState.AreaNode[0], new StaticState.AreaEdge[0, 0]);
+        }
+        public static WorldRepresentation NewWorldRepresentationMock() {
+            return new WorldRepresentation(NewStaticStateMock().Object);
+        }
+    }
+
     [TestFixture]
     class WorldRepresentationTests {
 
