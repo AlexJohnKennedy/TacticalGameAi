@@ -11,7 +11,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
     [TestFixture]
     class DynamicStateTests {
 
-        private DynamicState toTest;
+        private DynamicState defaultDynamicState;
         private Dictionary<FactType, Fact>[] facts;
 
         public DynamicStateTests() {
@@ -62,7 +62,68 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             facts[7] = new Dictionary<FactType, Fact> { };
         }
         private void BuildDynamicStateToTest() {
-            toTest = new DynamicState(facts);
+            defaultDynamicState = new DynamicState(facts);
+        }
+        private void TestDefaultDynamicState(DynamicState toTest) {
+            // Test node data reads
+            Assert.IsTrue(toTest.GetNodeData(0).FriendlyPresence == 2);
+            Assert.IsTrue(toTest.GetNodeData(0).EnemyPresence == 0);
+            Assert.IsTrue(toTest.GetNodeData(0).IsFriendlyArea);
+            Assert.IsTrue(toTest.GetNodeData(0).IsClear);
+            Assert.IsTrue(toTest.GetNodeData(0).IsControlledByTeam);
+            Assert.IsTrue(!toTest.GetNodeData(1).IsControlledByTeam);
+            Assert.IsTrue(toTest.GetNodeData(1).IsClear);
+            Assert.IsTrue(toTest.GetNodeData(1).VisibleToEnemies);
+            Assert.IsTrue(!toTest.GetNodeData(1).PotentialEnemies);
+            Assert.IsTrue(toTest.GetNodeData(2).EnemyPresence == 3);
+            Assert.IsTrue(toTest.GetNodeData(2).IsEnemyArea);
+            Assert.IsTrue(!toTest.GetNodeData(2).IsContestedArea);
+            Assert.IsTrue(!toTest.GetNodeData(2).IsClear);
+            Assert.IsTrue(toTest.GetNodeData(2).IsControlledByEnemies);
+            Assert.IsTrue(toTest.GetNodeData(2).VisibleToEnemies);
+            Assert.IsTrue(toTest.GetNodeData(3).IsClear);
+            Assert.IsTrue(toTest.GetNodeData(3).IsControlledByTeam);
+            Assert.IsTrue(!toTest.GetNodeData(3).IsControlledByEnemies);
+            Assert.IsTrue(!toTest.GetNodeData(4).IsControlledByEnemies);
+            Assert.IsTrue(toTest.GetNodeData(4).FriendlyPresence == 1);
+            Assert.IsTrue(toTest.GetNodeData(4).IsFriendlyArea);
+            Assert.IsTrue(toTest.GetNodeData(5).DangerLevel == 5);
+            Assert.IsTrue(toTest.GetNodeData(5).VisibleToEnemies);
+            Assert.IsTrue(toTest.GetNodeData(5).PotentialEnemies);
+            Assert.IsTrue(toTest.GetNodeData(5).IsClear == false);
+            Assert.IsTrue(toTest.GetNodeData(6).PotentialEnemies);
+            Assert.IsTrue(toTest.GetNodeData(6).IsEnemyArea == false);
+            Assert.IsTrue(toTest.GetNodeData(6).IsControlledByTeam == false);
+            Assert.IsTrue(!toTest.GetNodeData(7).IsControlledByTeam);
+            Assert.IsTrue(toTest.GetNodeData(7).EnemyPresence == 0);
+            Assert.IsTrue(toTest.GetNodeData(7).FriendlyPresence == 0);
+
+            // Do the same tests but using the graph-subset reader functions
+            Func<int, int> friends = toTest.KnownFriendlyPresenceReader();
+            Assert.IsTrue(friends(0) == 2);
+            Assert.IsTrue(friends(1) == 0);
+            Assert.IsTrue(friends(2) == 0);
+            Assert.IsTrue(friends(3) == 0);
+            Assert.IsTrue(friends(4) == 1);
+            Func<int, bool> clear = toTest.IsClearReader();
+            Assert.IsTrue(clear(0) && clear(1) && !clear(2) && clear(3) && !clear(7));
+            Func<int, bool> potentials = toTest.PotentialEnemiesReader();
+            Assert.IsTrue(potentials(6) && !potentials(1) && !potentials(7) && !potentials(7) && potentials(5));
+            Func<int, bool> vis = toTest.VisibleToEnemiesReader();
+            Assert.IsTrue(vis(1) && vis(2) && !vis(3) && !vis(0) && !vis(7));
+
+            // Test edges
+            Func<int, int, bool> clearing = toTest.CausingClearEffectReader();
+            Assert.IsTrue(clearing(0, 1) && clearing(0, 3) && !clearing(0, 2) && !clearing(2, 1) && clearing(4, 3));
+            Func<int, int, bool> causingPotentials = toTest.CausingPotentialEnemiesEffectReader();
+            Assert.IsTrue(causingPotentials(5, 1) && causingPotentials(5, 6) && !causingPotentials(2, 1));
+            Func<int, int, bool> causingVisible = toTest.CausingVisibleToEnemiesEffectReader();
+            Assert.IsTrue(causingVisible(2, 1) && !causingVisible(2, 7) && !causingVisible(1, 5));
+
+            Assert.IsTrue(toTest.GetEdge(0, 1).IsCausingClearEffect && !toTest.GetEdge(0, 1).IsCausingControlledByTeamEffect);
+            Assert.IsTrue(toTest.GetEdge(0, 3).IsCausingClearEffect && toTest.GetEdge(0, 3).IsCausingControlledByTeamEffect);
+            Assert.IsTrue(toTest.GetEdge(2, 1).IsCausingVisibleToEnemiesEffect && toTest.GetEdge(2, 5).IsCausingVisibleToEnemiesEffect);
+            Assert.IsTrue(toTest.GetEdge(5, 1).IsCausingPotentialEnemiesEffect);
         }
 
         [Test]
@@ -74,66 +135,34 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                 //PrepareFactData();
             }
             for (int i = 0; i < 1; i++) {
-                // Test node data reads
-                Assert.IsTrue(toTest.GetNodeData(0).FriendlyPresence == 2);
-                Assert.IsTrue(toTest.GetNodeData(0).EnemyPresence == 0);
-                Assert.IsTrue(toTest.GetNodeData(0).IsFriendlyArea);
-                Assert.IsTrue(toTest.GetNodeData(0).IsClear);               
-                Assert.IsTrue(toTest.GetNodeData(0).IsControlledByTeam);    
-                Assert.IsTrue(!toTest.GetNodeData(1).IsControlledByTeam);
-                Assert.IsTrue(toTest.GetNodeData(1).IsClear);
-                Assert.IsTrue(toTest.GetNodeData(1).VisibleToEnemies);
-                Assert.IsTrue(!toTest.GetNodeData(1).PotentialEnemies);
-                Assert.IsTrue(toTest.GetNodeData(2).EnemyPresence == 3);
-                Assert.IsTrue(toTest.GetNodeData(2).IsEnemyArea);
-                Assert.IsTrue(!toTest.GetNodeData(2).IsContestedArea);
-                Assert.IsTrue(!toTest.GetNodeData(2).IsClear);
-                Assert.IsTrue(toTest.GetNodeData(2).IsControlledByEnemies);
-                Assert.IsTrue(toTest.GetNodeData(2).VisibleToEnemies);
-                Assert.IsTrue(toTest.GetNodeData(3).IsClear);
-                Assert.IsTrue(toTest.GetNodeData(3).IsControlledByTeam);
-                Assert.IsTrue(!toTest.GetNodeData(3).IsControlledByEnemies);
-                Assert.IsTrue(!toTest.GetNodeData(4).IsControlledByEnemies);
-                Assert.IsTrue(toTest.GetNodeData(4).FriendlyPresence == 1);
-                Assert.IsTrue(toTest.GetNodeData(4).IsFriendlyArea);
-                Assert.IsTrue(toTest.GetNodeData(5).DangerLevel == 5);
-                Assert.IsTrue(toTest.GetNodeData(5).VisibleToEnemies);
-                Assert.IsTrue(toTest.GetNodeData(5).PotentialEnemies);
-                Assert.IsTrue(toTest.GetNodeData(5).IsClear == false);
-                Assert.IsTrue(toTest.GetNodeData(6).PotentialEnemies);
-                Assert.IsTrue(toTest.GetNodeData(6).IsEnemyArea == false);
-                Assert.IsTrue(toTest.GetNodeData(6).IsControlledByTeam == false);
-                Assert.IsTrue(!toTest.GetNodeData(7).IsControlledByTeam);
-                Assert.IsTrue(toTest.GetNodeData(7).EnemyPresence == 0);
-                Assert.IsTrue(toTest.GetNodeData(7).FriendlyPresence == 0);
-
-                // Do the same tests but using the graph-subset reader functions
-                Func<int, int> friends = toTest.KnownFriendlyPresenceReader();
-                Assert.IsTrue(friends(0) == 2);
-                Assert.IsTrue(friends(1) == 0);
-                Assert.IsTrue(friends(2) == 0);
-                Assert.IsTrue(friends(3) == 0);
-                Assert.IsTrue(friends(4) == 1);
-                Func<int, bool> clear = toTest.IsClearReader();
-                Assert.IsTrue(clear(0) && clear(1) && !clear(2) && clear(3) && !clear(7));
-                Func<int, bool> potentials = toTest.PotentialEnemiesReader();
-                Assert.IsTrue(potentials(6) && !potentials(1) && !potentials(7) && !potentials(7) && potentials(5));
-                Func<int, bool> vis = toTest.VisibleToEnemiesReader();
-                Assert.IsTrue(vis(1) && vis(2) && !vis(3) && !vis(0) && !vis(7));
-
-                // Test edges
-                Func<int, int, bool> clearing = toTest.CausingClearEffectReader();
-                Assert.IsTrue(clearing(0, 1) && clearing(0, 3) && !clearing(0, 2) && !clearing(2, 1) && clearing(4,3));
-                Func<int, int, bool> causingPotentials = toTest.CausingPotentialEnemiesEffectReader();
-                Assert.IsTrue(causingPotentials(5, 1) && causingPotentials(5, 6) && !causingPotentials(2, 1));
-                Func<int, int, bool> causingVisible = toTest.CausingVisibleToEnemiesEffectReader();
-                Assert.IsTrue(causingVisible(2, 1) && !causingVisible(2, 7) && !causingVisible(1, 5));
-
-                Assert.IsTrue(toTest.GetEdge(0, 1).IsCausingClearEffect && !toTest.GetEdge(0, 1).IsCausingControlledByTeamEffect);
-                Assert.IsTrue(toTest.GetEdge(0, 3).IsCausingClearEffect && toTest.GetEdge(0, 3).IsCausingControlledByTeamEffect);
-                Assert.IsTrue(toTest.GetEdge(2, 1).IsCausingVisibleToEnemiesEffect && toTest.GetEdge(2, 5).IsCausingVisibleToEnemiesEffect);
-                Assert.IsTrue(toTest.GetEdge(5, 1).IsCausingPotentialEnemiesEffect);
+                TestDefaultDynamicState(defaultDynamicState);
             }
+        }
+
+        [Test]
+        public void DynamicState_UpdateConstructor_SuccessfullyUpdates() {
+            // Set up the initial Dynamic State.
+            PrepareFactData();
+            BuildDynamicStateToTest();
+            DynamicState original = this.defaultDynamicState;
+
+            // Assert that the default test passes to begin with.. (just in case..)
+            TestDefaultDynamicState(original);
+
+            // Create the 'change' data, and create a new DynamicState object which contains those changes.
+            DynamicState modified = new DynamicState(original, GenerateFactChangeData());
+            TestModifiedDynamicState(modified);
+
+            // Assert that the original state object is unchanged.
+            TestDefaultDynamicState(original);
+
+            // Assert that the new state object is set up correctly, containing the changes and the copied-state from the original.
+        }
+        private Dictionary<int, Dictionary<FactType, Fact>> GenerateFactChangeData() {
+            // --- CHANGES ---
+            // Node zero contains any friendlies. (Fact removal)
+            // Node seven contains Danger
+
         }
 
     }
