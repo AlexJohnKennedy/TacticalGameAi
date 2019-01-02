@@ -12,7 +12,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             // Add our effect type to all nodes that are visible from the fact node.
             for (int i=0; i < numNodes; i++) {
                 if (edgeCondition(factNode, i)) {
-                    factObject.AccessEffectsCausedList().Add(new Effect(effectType, 1, i, factNode));
+                    factObject.AccessEffectsCausedList().Add(new Effect(effectType, value, i, factNode));
                 }
             }
         }
