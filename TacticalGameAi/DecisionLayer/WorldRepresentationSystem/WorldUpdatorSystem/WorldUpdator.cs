@@ -35,6 +35,14 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         public WorldRepresentation RevertDynamicStateChange(WorldRepresentation world, IDynamicStateChange eventData) {
             // Initialise data container for the 'changes' object which we will pass into the DynamicState constructor.
             Dictionary<int, Dictionary<FactType, Fact.MutableFact>> changeData = new Dictionary<int, Dictionary<FactType, Fact.MutableFact>>();
+
+            // Collect the 'current' fact sets for the nodes which are to be affected by this State change being applied.
+            foreach (int n in eventData.AffectedNodes) {
+                Dictionary<FactType, Fact> nFacts = DynamicStateInternalReader.GetNodeFact(n, world.DynamicState);
+                Dictionary<FactType, Fact.MutableFact> nFactsMutableCopies = nFacts.ToDictionary(kvp => kvp.Key, kvp => new Fact.MutableFact(kvp.Value));
+                changeData.Add(n, nFactsMutableCopies);
+            }
+
             Remove(eventData.GetFactsAfter(), changeData, world);
             Add(eventData.GetFactsBefore(), changeData, world);
 
