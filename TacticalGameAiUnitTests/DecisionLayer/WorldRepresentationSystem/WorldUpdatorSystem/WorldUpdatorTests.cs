@@ -15,11 +15,11 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
         [Test]
         public void WorldUpdator_ApplyDynamicWorldChange_SuccessfullyCallsCorrectAdderLogic() {
             // Mock some fake FactAdders, and associate them with facttypes in order to build a WorldUpdator. These need not have any effect adders in them...
-            Mock<FactAdder> friendlyAdder = new Mock<FactAdder>(FactType.FriendlyPresence, new IEffectAdder[] { });
-            Mock<FactAdder> enemyAdder = new Mock<FactAdder>(FactType.EnemyPresence, new IEffectAdder[] { });
-            Mock<FactAdder> dangerAdder = new Mock<FactAdder>(FactType.Danger, new IEffectAdder[] { });
-            Mock<FactAdder> unknownDangerAdder = new Mock<FactAdder>(FactType.DangerFromUnknownSource, new IEffectAdder[] { });
-            Dictionary<FactType, FactAdder> dict = new Dictionary<FactType, FactAdder> {
+            Mock<IFactAdder> friendlyAdder = new Mock<IFactAdder>();
+            Mock<IFactAdder> enemyAdder = new Mock<IFactAdder>();
+            Mock<IFactAdder> dangerAdder = new Mock<IFactAdder>();
+            Mock<IFactAdder> unknownDangerAdder = new Mock<IFactAdder>();
+            Dictionary<FactType, IFactAdder> dict = new Dictionary<FactType, IFactAdder> {
                 { FactType.FriendlyPresence,        friendlyAdder.Object      },
                 { FactType.EnemyPresence,           enemyAdder.Object         },
                 { FactType.Danger,                  dangerAdder.Object        },

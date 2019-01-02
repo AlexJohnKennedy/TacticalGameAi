@@ -6,9 +6,9 @@ using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSystem {
     public class WorldUpdator {
-        private Dictionary<FactType, FactAdder> adderLogic;     // This class doesn't care about the semanitcs of each FactType. It uses generic Adder components to apply them.
+        private Dictionary<FactType, IFactAdder> adderLogic;     // This class doesn't care about the semanitcs of each FactType. It uses generic Adder components to apply them.
 
-        public WorldUpdator(Dictionary<FactType, FactAdder> adderLogic) {
+        public WorldUpdator(Dictionary<FactType, IFactAdder> adderLogic) {
             this.adderLogic = adderLogic;
         }
 
