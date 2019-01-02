@@ -268,6 +268,9 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                 n = empty.GetNodeData(i);
                 Assert.DoesNotThrow(() => { int d = n.DangerLevel; });
                 Assert.DoesNotThrow(() => { bool b = n.IsControlledByTeam; });
+
+                Assert.DoesNotThrow(() => { Dictionary<FactType, Fact> f = DynamicStateInternalReader.GetNodeFact(i, empty); });
+                Assert.DoesNotThrow(() => { Dictionary<EffectType, EffectSum> f = DynamicStateInternalReader.GetNodeEffectSum(i, empty); });
             }
         }
     }
