@@ -20,6 +20,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         public StaticState StaticState { get; }
         public DynamicState DynamicState { get; }
         public Interpretation Interpretation { get; }
+        public int NumberOfNodes { get; }
 
         // Constructors
         public WorldRepresentation(StaticState staticState, DynamicState dynamicState = null, Interpretation interpretation = null) {
@@ -29,6 +30,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             }
             DynamicState = dynamicState ?? DynamicState.CreateEmpty(staticState.NumberOfNodes);
             Interpretation = interpretation ?? Interpretation.CreateEmpty(staticState.NumberOfNodes);
+            NumberOfNodes = staticState.NumberOfNodes;
         }
         private WorldRepresentation(WorldRepresentation other, StaticState staticState, DynamicState dynamicState, Interpretation interpretation) {
             StaticState = staticState ?? other.StaticState;
