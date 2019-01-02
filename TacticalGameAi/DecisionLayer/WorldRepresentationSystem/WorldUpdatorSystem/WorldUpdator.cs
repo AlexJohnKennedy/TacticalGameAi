@@ -10,6 +10,13 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
 
         public WorldUpdator(Dictionary<FactType, IFactAdder> adderLogic) {
             this.adderLogic = adderLogic;
+
+            // Do not allow a World Updator object to be created with an incomplete FactAdder set. This would mean we could encounter DynamicStateChanges which
+            // the WorldUpdator does not know how to handle!
+            foreach(FactType f in Enum.GetValues(typeof(FactType))) {
+                if (!adderLogic.ContainsKey(f)) throw new ArgumentException("adderLogic", "A World Updator was created with an incomplete FactAdder set. " +
+                    "This would allow the scenario where this World Updator does not know how to handle certain DynamicStateChange events!");
+            }
         }
 
         // Public interface

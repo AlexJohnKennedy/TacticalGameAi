@@ -13,6 +13,20 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
     class WorldUpdatorTests {
 
         [Test]
+        public void WorldUpdator_PassedIncompleteFactAdderSetOnConstruction_Throws() {
+            // Mock some fake FactAdders, and associate them with facttypes in order to build a WorldUpdator. These need not have any effect adders in them...
+            Mock<IFactAdder> friendlyAdder = new Mock<IFactAdder>();
+            Mock<IFactAdder> enemyAdder = new Mock<IFactAdder>();
+            Mock<IFactAdder> unknownDangerAdder = new Mock<IFactAdder>();
+            Dictionary<FactType, IFactAdder> dict = new Dictionary<FactType, IFactAdder> {
+                { FactType.FriendlyPresence,        friendlyAdder.Object      },
+                { FactType.EnemyPresence,           enemyAdder.Object         },
+                { FactType.DangerFromUnknownSource, unknownDangerAdder.Object }
+            };
+            Assert.Throws<ArgumentException>(() => new WorldUpdator(dict));
+        }
+
+        [Test]
         public void WorldUpdator_ApplyDynamicWorldChange_SuccessfullyCallsCorrectAdderLogic() {
             // Mock some fake FactAdders, and associate them with facttypes in order to build a WorldUpdator. These need not have any effect adders in them...
             Mock<IFactAdder> friendlyAdder = new Mock<IFactAdder>();
