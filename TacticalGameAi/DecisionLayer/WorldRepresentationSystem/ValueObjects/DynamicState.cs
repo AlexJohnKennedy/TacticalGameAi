@@ -7,6 +7,10 @@ using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
     public class DynamicState {
 
+        public static DynamicState CreateEmpty(int numNodes) {
+            return new DynamicState(numNodes);
+        }
+
         // The original representation of data
         private Dictionary<FactType, Fact>[] areaFacts;
         private Dictionary<EffectType, EffectSum>[] areaEffectSums;
@@ -93,6 +97,18 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                     }
                 }
             }
+        }
+        // Private constructor used to create 'empty' dynamic states.
+        private DynamicState(int n) {
+            areaFacts = new Dictionary<FactType, Fact>[n];
+            areaEffectSums = new Dictionary<EffectType, EffectSum>[n];
+            for (int i = 0; i < n; i++) {
+                areaEffectSums[i] = new Dictionary<EffectType, EffectSum>();
+                areaFacts[i] = new Dictionary<FactType, Fact>();
+            }
+            areaEffects = new List<Effect>[n, n];
+            areaNodes = new AreaNode[n];
+            areaEdges = new AreaEdge[n, n];
         }
 
         // Public Interface - Clients can request reader functions to read a subset of the graph. This describes the Fact reader functions.

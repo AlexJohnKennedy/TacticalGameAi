@@ -27,8 +27,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             if (dynamicState == null && interpretation != null) {
                 throw new ArgumentNullException("dynamicState", "ERROR: Tried to instantiate a new WorldRepresentation with Interpretation but no Dynamic State. This is illegal because Interpretation information depends on Dynamic State information");
             }
-            DynamicState = dynamicState;
-            Interpretation = interpretation;
+            DynamicState = dynamicState ?? DynamicState.CreateEmpty(staticState.NumberOfNodes);
+            Interpretation = interpretation ?? Interpretation.CreateEmpty(staticState.NumberOfNodes);
         }
         private WorldRepresentation(WorldRepresentation other, StaticState staticState, DynamicState dynamicState, Interpretation interpretation) {
             StaticState = staticState ?? other.StaticState;

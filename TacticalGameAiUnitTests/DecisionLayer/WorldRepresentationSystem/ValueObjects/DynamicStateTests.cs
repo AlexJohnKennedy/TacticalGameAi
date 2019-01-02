@@ -241,5 +241,34 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetEdge(5, 1).IsCausingPotentialEnemiesEffect);
         }
 
+        [Test]
+        public void DynamicState_CreateEmpty_DoesNotThrowUponReadCalls() {
+            DynamicState empty = DynamicState.CreateEmpty(10);  // Arbitrary number
+
+            Assert.DoesNotThrow(() => empty.GetEdge(2, 5));
+            Assert.DoesNotThrow(() => empty.GetEdge(1, 2));
+            Assert.DoesNotThrow(() => empty.GetEdge(7, 3));
+
+            DynamicState.AreaEdge e1 = empty.GetEdge(2, 5);
+            DynamicState.AreaEdge e2 = empty.GetEdge(1, 2);
+            DynamicState.AreaEdge e3 = empty.GetEdge(7, 3);
+
+            Assert.DoesNotThrow(() => { bool b = e1.IsCausingClearEffect; });
+            Assert.DoesNotThrow(() => { bool b = e2.IsCausingPotentialEnemiesEffect; });
+            Assert.DoesNotThrow(() => { int  i = e1.ToNodeId; });
+
+            for (int i = 0; i < 10; i++) {
+                Assert.DoesNotThrow(() => empty.IsEnemyAreaReader()(i));
+                Assert.DoesNotThrow(() => empty.IsControlledByTeamReader()(i));
+                Assert.DoesNotThrow(() => empty.IsContestedAreaReader()(i));
+                Assert.DoesNotThrow(() => empty.KnownDangerLevelReader()(i));
+
+                DynamicState.AreaNode n;
+                Assert.DoesNotThrow(() => empty.GetNodeData(i));
+                n = empty.GetNodeData(i);
+                Assert.DoesNotThrow(() => { int d = n.DangerLevel; });
+                Assert.DoesNotThrow(() => { bool b = n.IsControlledByTeam; });
+            }
+        }
     }
 }

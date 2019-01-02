@@ -69,6 +69,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         // Graph storage - Arrays since the graphs are likely to become dense, thus adjacency matrix is more effective.
         private AreaNode[] areaNodes;
         private AreaEdge[,] areaEdges;
+        private int numNodes;
 
         // TODO: 6 - Add Obstacle graph creation and storage. Obstacle graph is applied on top of base area data to modify return results, essentially acting as an additional 'filter'.
         // TODO: 7 - Implement the ability to read a structured data file (JSON, XML) containing a WorldRepresentation configuration in order to build the StaticState/DynamicState. This will be essential for testing the system!
@@ -80,6 +81,14 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             }
             else if (edges.GetLength(0) != edges.GetLength(1)) {
                 throw new ArgumentException("ERROR: Tried to create a new StaticState but the edge matrix was not a sqaure matrix");
+            }
+            numNodes = areaNodes.Length;
+        }
+
+        // Public Interface - Read how large the node set is for this static state.
+        public int NumberOfNodes {
+            get {
+                return numNodes;
             }
         }
 

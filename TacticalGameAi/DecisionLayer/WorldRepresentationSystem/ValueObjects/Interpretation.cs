@@ -5,6 +5,10 @@ using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects.Underl
 
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
     public class Interpretation {
+        public static Interpretation CreateEmpty(int numNodes) {
+            return new Interpretation();
+        }
 
+        // TODO
     }
 }
