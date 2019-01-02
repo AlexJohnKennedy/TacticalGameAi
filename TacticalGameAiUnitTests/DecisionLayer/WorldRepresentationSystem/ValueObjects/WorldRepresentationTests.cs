@@ -8,7 +8,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
     public static class WorldRep_ValueObjectMocker {
         public static Mock<StaticState> NewStaticStateMock() {
-            return new Mock<StaticState>(new StaticState.AreaNode[0], new StaticState.AreaEdge[0, 0]);
+            return new Mock<StaticState>(new StaticState.AreaNode[1000], new StaticState.AreaEdge[1000, 1000]);
         }
         public static WorldRepresentation NewWorldRepresentationMock() {
             return new WorldRepresentation(NewStaticStateMock().Object);
@@ -20,7 +20,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
         // Dummy arrays needed to satisfy the StaticState constructor, so that we can simply just mock them.
         private StaticState.AreaNode[] arr = new StaticState.AreaNode[1];
-        private StaticState.AreaEdge[,] arr2 = new StaticState.AreaEdge[1,1];
+        private StaticState.AreaEdge[,] arr2 = new StaticState.AreaEdge[1, 1];
 
         //[Test]
         public void Contructor_ReceivesThreeComponents_ReturnsSameInstances() {

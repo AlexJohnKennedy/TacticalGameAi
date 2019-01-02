@@ -62,7 +62,10 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
                     Assert.IsTrue(toPopulate.ContainsKey(t));
                     Assert.IsTrue(toPopulate[t].Value == VALUE);
                 }
-                else if (t == FactType.EnemyPresence) { Assert.IsTrue(toPopulate.ContainsKey(t)); }
+                else if (t == FactType.EnemyPresence) {
+                    Assert.IsTrue(toPopulate.ContainsKey(t));
+                    Assert.IsTrue(toPopulate[t].Value == 1);
+                }
                 else Assert.IsFalse(toPopulate.ContainsKey(t));
             }
 

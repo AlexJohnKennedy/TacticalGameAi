@@ -5,7 +5,7 @@ using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHiddenT
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSystem {
-    class WorldUpdator {
+    public class WorldUpdator {
         private Dictionary<FactType, FactAdder> adderLogic;     // This class doesn't care about the semanitcs of each FactType. It uses generic Adder components to apply them.
 
         public WorldUpdator(Dictionary<FactType, FactAdder> adderLogic) {
@@ -72,9 +72,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
     // Interface for some object which encapsulates a Dynamic State Data change as a result of some event (Perception)
     /* IMPLEMENTATION REQUIREMENT: AffectedNodes == GetFactsAfter.Keys == GetGactsBefore.Keys | (They must all refer to the same set of nodes) */
     public interface IDynamicStateChange {
-        // (nodeid , (factTypes and corresponding value))
-        Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> GetFactsAfter();
-        Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> GetFactsBefore();
+        // (nodeid , (factTypes and corresponding value)). Note the the set of facts here DO NOT necessarilly contain ALL the facts of a given node after this
+        // change. It only contains the facts which should be 'added'. Conversely, the 'before' facts only contain the previously existing facts which are
+        // removed or changed by this StateChange event.
+        Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> GetFactsAfter();      // Set of NEW facts and values to be added to each respective node.
+        Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> GetFactsBefore();     // Set of OLD facts and values which are changed/removed by this change, for each respective ndoe.
         IEnumerable<int> AffectedNodes { get; }
     }
 
