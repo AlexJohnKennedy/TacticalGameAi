@@ -73,5 +73,31 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             e1.Verify(e => e.AddEffects(fakeWorld, NODE, It.IsAny<Fact.MutableFact>()), Times.Once());
             e2.Verify(e => e.AddEffects(fakeWorld, NODE, It.IsAny<Fact.MutableFact>()), Times.Once());
         }
+
+        [Test]
+        public void FactAdder_RemoveFact_SuccessfullyRemovesFact() {
+            // Arrange
+            int NODE = 3;
+            
+            Fact.MutableFact existingFact  = new Fact.MutableFact(FactType.EnemyPresence, 1, null);
+            Fact.MutableFact existingFact2 = new Fact.MutableFact(FactType.Danger, 3, null);
+            WorldRepresentation fakeWorld  = WorldRep_ValueObjectMocker.NewWorldRepresentationMock();
+            Dictionary<FactType, Fact.MutableFact> toPopulate = new Dictionary<FactType, Fact.MutableFact> {
+                { FactType.EnemyPresence, existingFact },
+                { FactType.Danger, existingFact2 }
+            };
+
+            FactAdder toTest = new FactAdder(FactType.EnemyPresence, new IEffectAdder[] { });
+
+            // ACT
+            toTest.RemoveFact(fakeWorld, NODE, toPopulate);
+
+            // ASSERT
+            foreach (FactType t in Enum.GetValues(typeof(FactType))) {
+                if (t == FactType.Danger) Assert.IsTrue(toPopulate.ContainsKey(t));
+                else Assert.IsFalse(toPopulate.ContainsKey(t));
+            }
+            Assert.IsTrue(existingFact2.Value == 3 && existingFact2.FactType == FactType.Danger);
+        }
     }
 }
