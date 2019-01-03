@@ -18,8 +18,4 @@
     <ProjectReference Include="..\TacticalGameAi\TacticalGameAi.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="DecisionLayer\WorldRepresentationSystem\" />
-  </ItemGroup>
-
 </Project>
