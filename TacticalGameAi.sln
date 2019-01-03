@@ -5,7 +5,9 @@ VisualStudioVersion = 15.0.28307.168
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TacticalGameAi", "TacticalGameAi\TacticalGameAi.csproj", "{7B8D50A2-3504-4251-A12C-914ADA35D965}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TacticalGameAiUnitTests", "TacticalGameAiUnitTests\TacticalGameAiUnitTests.csproj", "{795E6CB3-610E-44DC-B2F6-23ECF4F977CE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TacticalGameAiUnitTests", "TacticalGameAiUnitTests\TacticalGameAiUnitTests.csproj", "{795E6CB3-610E-44DC-B2F6-23ECF4F977CE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TacticalGameAiIntegrationTests", "TacticalGameAiIntegrationTests\TacticalGameAiIntegrationTests.csproj", "{57AC023B-2BEA-49A3-B192-DF46A40EDE23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{795E6CB3-610E-44DC-B2F6-23ECF4F977CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{795E6CB3-610E-44DC-B2F6-23ECF4F977CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{795E6CB3-610E-44DC-B2F6-23ECF4F977CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57AC023B-2BEA-49A3-B192-DF46A40EDE23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57AC023B-2BEA-49A3-B192-DF46A40EDE23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57AC023B-2BEA-49A3-B192-DF46A40EDE23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57AC023B-2BEA-49A3-B192-DF46A40EDE23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
