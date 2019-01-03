@@ -18,10 +18,10 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public bool Junction { get; }           // BOOL - Is this area a junction point? Will be true if multiple paths converge at this point.
             public bool OverwatchLocation { get; }  // BOOL - Is this area somewhere which observes over a large number of different general areas?
 
-            // Private constructor, so that only the surrounding class can access it
-            public AreaNode(int nodeId, int generalAreaId, int concealmentLevel, bool chokepoint, int tacticalValue, int exposureLevel, bool deadEnd, bool junction, bool overwatchLocation) {
+            public AreaNode(int nodeId, int generalAreaId, int coverLevel, int concealmentLevel, bool chokepoint, int tacticalValue, int exposureLevel, bool deadEnd, bool junction, bool overwatchLocation) {
                 NodeId = nodeId;
                 GeneralAreaId = generalAreaId;
+                CoverLevel = coverLevel;
                 ConcealmentLevel = concealmentLevel;
                 Chokepoint = chokepoint;
                 TacticalValue = tacticalValue;
@@ -30,6 +30,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 Junction = junction;
                 OverwatchLocation = overwatchLocation;
             }
+
+            // Private constructor, so that only the surrounding class can access it
+
         }
         public class AreaEdge {
             public int FromNodeId { get; }          // 'This' node (A)
@@ -42,7 +45,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public int RelativeCoverLevel { get; }  // BOOL - True if a unit in A can take cover relative to area B.
             public bool HasControlOver { get; }     // BOOL - True if control over area A gives you control over area B.
 
-            private protected AreaEdge oppositeEdge;  // Reference to the reverse edge, so we can more easily derive information.
+            internal AreaEdge oppositeEdge;  // Reference to the reverse edge, so we can more easily derive information.
             public bool CanBeSeenFrom {
                 get { return oppositeEdge.CanSee; }
             }
@@ -83,6 +86,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 throw new ArgumentException("ERROR: Tried to create a new StaticState but the edge matrix was not a sqaure matrix");
             }
             numNodes = areaNodes.Length;
+
+            // Setup 'opposite edge' relationships
+            foreach (AreaEdge e in areaEdges) {
+                e.oppositeEdge = areaEdges[e.ToNodeId, e.FromNodeId];
+            }
         }
 
         // Public Interface - Read how large the node set is for this static state.

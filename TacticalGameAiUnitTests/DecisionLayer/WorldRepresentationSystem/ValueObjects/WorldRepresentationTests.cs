@@ -8,7 +8,15 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
     public static class WorldRep_ValueObjectMocker {
         public static Mock<StaticState> NewStaticStateMock() {
-            return new Mock<StaticState>(new StaticState.AreaNode[1000], new StaticState.AreaEdge[1000, 1000]);
+            var n = new StaticState.AreaNode[100];
+            var e = new StaticState.AreaEdge[100, 100];
+            for (int i=0; i<100; i++) {
+                n[i] = new StaticState.AreaNode(i, i, 0, 0, false, 0, 0, false, false, false);
+                for (int j=0; j<100; j++) {
+                    e[i, j] = new StaticState.AreaEdge(i, j, false, false, 0, 0, 0, 0, false);
+                }
+            }
+            return new Mock<StaticState>(n, e);
         }
         public static WorldRepresentation NewWorldRepresentationMock() {
             return new WorldRepresentation(NewStaticStateMock().Object);
