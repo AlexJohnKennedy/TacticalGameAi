@@ -41,4 +41,16 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, world.StaticState.CanSeeReader(), effectType);
         }
     }
+
+    public class CanBeSeenByBasedEffectAdder : IEffectAdder {
+        private EffectType effectType;
+
+        public CanBeSeenByBasedEffectAdder(EffectType effectType) {
+            this.effectType = effectType;
+        }
+
+        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
+            SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, (from, to) => world.StaticState.CanSeeReader()(to, from), effectType);
+        }
+    }
 }
