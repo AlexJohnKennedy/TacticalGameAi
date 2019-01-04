@@ -20,6 +20,18 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         }
 
         // Public interface
+        public WorldRepresentation ApplyDynamicStateChangesSequentially(WorldRepresentation world, params IDynamicStateChange[] events) {
+            foreach (IDynamicStateChange e in events) {
+                world = ApplyDynamicStateChange(world, e);
+            }
+            return world;
+        }
+        public WorldRepresentation RevertDynamicStateChangesSequentially(WorldRepresentation world, params IDynamicStateChange[] events) {
+            foreach (IDynamicStateChange e in events) {
+                world = RevertDynamicStateChange(world, e);
+            }
+            return world;
+        }
         public WorldRepresentation ApplyDynamicStateChange(WorldRepresentation world, IDynamicStateChange eventData) {
             // Initialise data container for the 'changes' object which we will pass into the DynamicState constructor.
             // For all the nodes which are going to be affected, we need to ensure we collect all the 'current' fact data for those nodes. That way we can remove and add the changes accordingly.
