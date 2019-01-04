@@ -131,7 +131,20 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
                 else { Assert.IsTrue(enemies(i) == 0); }
             }
 
+            // Revert the final change, which should result in the 'default' state being true.
+            result = worldUpdator.RevertDynamicStateChange(result, changeToRevert1.Object);
+            HardCodedStateCreator.CheckTestDynamicState(result.DynamicState);
+            HardCodedStateCreator.CheckTestStaticState(result.StaticState);
 
+            // Revert all the changes, which should result in an empty dynamic state once again.
+            // Note we reverted in a different order than applied, valid here since none of these 3 changes have any 'before facts' (they only applied, not removed)
+            result = worldUpdator.RevertDynamicStateChangesSequentially(result, change2.Object, change1.Object, change3.Object);
+
+            HardCodedStateCreator.CheckTestStaticState(result.StaticState);      // Checks Static state.
+            for (int i = 0; i < originalWorld.NumberOfNodes; i++) {
+                Assert.IsTrue(DynamicStateInternalReader.GetNodeFact(i, result.DynamicState).Count == 0);    // Checks that no Facts exist.
+                Assert.IsTrue(DynamicStateInternalReader.GetNodeEffectSum(i, result.DynamicState).Count == 0);   // Checks that no Effects exist.
+            }
         }
     }
 }
