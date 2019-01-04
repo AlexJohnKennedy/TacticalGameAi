@@ -131,10 +131,27 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
                 else { Assert.IsTrue(enemies(i) == 0); }
             }
 
+            // Apply again, but in a different order. Any order should be valid so long as Change1 preceeds changeToRevert1. (since changetorevert1 removes a fact added by change1).
+            WorldRepresentation result2 = worldUpdator.ApplyDynamicStateChangesSequentially(originalWorld, change1.Object, changeToRevert1.Object, change3.Object, change2.Object);
+
+            friendlies = result2.DynamicState.KnownFriendlyPresenceReader();
+            enemies = result2.DynamicState.KnownEnemyPresenceReader();
+            for (int i = 0; i < result.NumberOfNodes; i++) {
+                if (i == 4) { Assert.IsTrue(friendlies(i) == 1); }
+                else { Assert.IsTrue(friendlies(i) == 0); }
+                if (i == 2) { Assert.IsTrue(enemies(i) == 3); }
+                else if (i == 5) { Assert.IsTrue(enemies(i) == 1); Assert.IsTrue(result.DynamicState.GetNodeData(i).DangerLevel == 0); }
+                else { Assert.IsTrue(enemies(i) == 0); }
+            }
+
             // Revert the final change, which should result in the 'default' state being true.
             result = worldUpdator.RevertDynamicStateChange(result, changeToRevert1.Object);
             HardCodedStateCreator.CheckTestDynamicState(result.DynamicState);
             HardCodedStateCreator.CheckTestStaticState(result.StaticState);
+
+            result2 = worldUpdator.RevertDynamicStateChange(result2, changeToRevert1.Object);
+            HardCodedStateCreator.CheckTestDynamicState(result2.DynamicState);
+            HardCodedStateCreator.CheckTestStaticState(result2.StaticState);
 
             // Revert all the changes, which should result in an empty dynamic state once again.
             // Note we reverted in a different order than applied, valid here since none of these 3 changes have any 'before facts' (they only applied, not removed)
