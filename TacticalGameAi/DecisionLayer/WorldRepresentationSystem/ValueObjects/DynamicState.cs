@@ -23,6 +23,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         // Redundent representation of info built upon construction to allow clients faster lookups to info we have already calculated.
         private AreaNode[]  areaNodes;
         private AreaEdge[,] areaEdges;
+        public NodeSetQuery NodeSetQueryObject { get; }
 
         // Public Interface - Directly get all Vertex and Edge data
         public AreaNode GetNodeData(int nodeId) {
@@ -46,7 +47,10 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             areaEdges = new AreaEdge[facts.Length, facts.Length];
 
             // Populate EffectSum dictionaries for each node, to identify all the effects they have on each node.
-            foreach (Dictionary<FactType,Fact> dict in facts) {
+            PopulateEffectSumDictionaries(facts);
+        }
+        private void PopulateEffectSumDictionaries(Dictionary<FactType, Fact>[] facts) {
+            foreach (Dictionary<FactType, Fact> dict in facts) {
                 foreach (Fact f in dict.Values) {
                     foreach (Effect e in f.EffectsCaused) {
                         AddEffectToEffectSum(e.NodeId, e);
@@ -87,16 +91,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                     areaFacts[i] = new Dictionary<FactType, Fact>(oldfacts[i]);
                 }
             }
-            for (int i=0; i < oldfacts.Length; i++) {
-                // Calculate the EffectSums
-                foreach (Fact f in areaFacts[i].Values) {              
-                    foreach (Effect e in f.EffectsCaused) {
-                        AddEffectToEffectSum(e.NodeId, e);
-                        if (areaEffects[e.CauseNodeId, e.NodeId] == null) { areaEffects[e.CauseNodeId, e.NodeId] = new List<Effect>(); }
-                        areaEffects[e.CauseNodeId, e.NodeId].Add(e);
-                    }
-                }
-            }
+            PopulateEffectSumDictionaries(areaFacts);
         }
         // Private constructor used to create 'empty' dynamic states.
         private DynamicState(int n) {
@@ -204,6 +199,22 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             return EdgeDataReaderFunction(EffectType.PotentialEnemies);
         }
         
+
+        public class NodeSetQuery {
+            public IEnumerable<int> GetFriendlyPresenceNodes { }
+            public IEnumerable<int> GetEnemyPresenceNodes { }
+            public IEnumerable<int> GetDangerNodes { }
+            public IEnumerable<int> GetDangerFromUnknownSourceNodes { }
+            public IEnumerable<int> GetUnknownPresenceNodes { }
+            public IEnumerable<int> GetFriendlyAreaNodes { }
+            public IEnumerable<int> GetEnemyAreaNodes { }
+            public IEnumerable<int> GetContestedAreaNodes { }
+            public IEnumerable<int> GetClearNodes { }
+            public IEnumerable<int> GetControlledByTeamNodes { }
+            public IEnumerable<int> GetControlledByEnemiesNodes { }
+            public IEnumerable<int> GetVisibleToEnemiesNodes { }
+            public IEnumerable<int> GetPotentialEnemiesNodes { }
+        }
 
         /* Class which is used by clients to read the current state of a Node. Data is not stored in this manner
          * since DynamicState has internal relationships required to update itself correctly and facilitate

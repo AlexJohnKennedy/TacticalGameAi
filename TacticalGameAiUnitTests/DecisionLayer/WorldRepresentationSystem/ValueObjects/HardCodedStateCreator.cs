@@ -235,6 +235,5 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetEdge(2, 1).IsCausingVisibleToEnemiesEffect && toTest.GetEdge(2, 5).IsCausingVisibleToEnemiesEffect);
             Assert.IsTrue(toTest.GetEdge(5, 1).IsCausingPotentialEnemiesEffect);
         }
-
     }
 }
