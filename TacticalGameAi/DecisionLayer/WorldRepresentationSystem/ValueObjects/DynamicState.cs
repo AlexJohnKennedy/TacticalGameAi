@@ -23,7 +23,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         // Redundent representation of info built upon construction to allow clients faster lookups to info we have already calculated.
         private AreaNode[]  areaNodes;
         private AreaEdge[,] areaEdges;
-        public NodeSetQuery NodeSetQueryObject { get; }
+        private NodeSetQuery nodeSetQueryObject;
 
         // Public Interface - Directly get all Vertex and Edge data
         public AreaNode GetNodeData(int nodeId) {
@@ -34,6 +34,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             if (areaEdges[fromNode, toNode] == null) areaEdges[fromNode, toNode] = new AreaEdge(fromNode, toNode, CausingClearEffectReader(), CausingControlledByTeamEffectReader(), CausingControlledByEnemiesEffectReader(), CausingVisibleToEnemiesEffectReader(), CausingPotentialEnemiesEffectReader());
             return areaEdges[fromNode, toNode];
         }
+        public NodeSetQuery NodeSetQueryObject { get { return nodeSetQueryObject; } }
 
         /* TODO: 7 - Implement a constructor which allows the WorldUpdater object (or whoever is building this) to pass in a pre-made Effect edge matrix and a pre-made EffectSum array.
          * This would probably be more efficient because the world updater can just build these collections as it searches to apply effects, rather than re-doing to work in the DS constructor
@@ -50,15 +51,26 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             PopulateEffectSumDictionaries(facts);
         }
         private void PopulateEffectSumDictionaries(Dictionary<FactType, Fact>[] facts) {
-            foreach (Dictionary<FactType, Fact> dict in facts) {
-                foreach (Fact f in dict.Values) {
+            var nodesWithFactsPresent = new Dictionary<FactType, HashSet<int>>();
+            foreach(FactType t in Enum.GetValues(typeof(FactType))) {
+                nodesWithFactsPresent.Add(t, new HashSet<int>());
+            }
+            var nodesWithEffectsPresent = new Dictionary<EffectType, HashSet<int>>();
+            foreach (EffectType t in Enum.GetValues(typeof(EffectType))) {
+                nodesWithEffectsPresent.Add(t, new HashSet<int>());
+            }
+            for (int i=0; i<facts.Length; i++) {
+                foreach (Fact f in facts[i].Values) {
+                    nodesWithFactsPresent[f.FactType].Add(i);
                     foreach (Effect e in f.EffectsCaused) {
+                        nodesWithEffectsPresent[e.EffectType].Add(e.NodeId);
                         AddEffectToEffectSum(e.NodeId, e);
                         if (areaEffects[e.CauseNodeId, e.NodeId] == null) { areaEffects[e.CauseNodeId, e.NodeId] = new List<Effect>(); }
                         areaEffects[e.CauseNodeId, e.NodeId].Add(e);
                     }
                 }
             }
+            nodeSetQueryObject = new NodeSetQuery(nodesWithFactsPresent, nodesWithEffectsPresent, KnownFriendlyPresenceReader(), KnownEnemyPresenceReader(), KnownDangerLevelReader(), HasDangerFromUnknownSourceReader(), HasNoKnownPresenceReader(), IsFriendlyAreaReader(), IsEnemyAreaReader(), IsContestedAreaReader(), IsClearReader(), IsControlledByTeamReader(), IsControlledByEnemiesReader(), VisibleToEnemiesReader(), PotentialEnemiesReader());
         }
         private void AddEffectToEffectSum(int node, Effect e) {
             if (areaEffectSums[node].ContainsKey(e.EffectType)) {
@@ -199,21 +211,104 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             return EdgeDataReaderFunction(EffectType.PotentialEnemies);
         }
         
-
         public class NodeSetQuery {
-            public IEnumerable<int> GetFriendlyPresenceNodes { }
-            public IEnumerable<int> GetEnemyPresenceNodes { }
-            public IEnumerable<int> GetDangerNodes { }
-            public IEnumerable<int> GetDangerFromUnknownSourceNodes { }
-            public IEnumerable<int> GetUnknownPresenceNodes { }
-            public IEnumerable<int> GetFriendlyAreaNodes { }
-            public IEnumerable<int> GetEnemyAreaNodes { }
-            public IEnumerable<int> GetContestedAreaNodes { }
-            public IEnumerable<int> GetClearNodes { }
-            public IEnumerable<int> GetControlledByTeamNodes { }
-            public IEnumerable<int> GetControlledByEnemiesNodes { }
-            public IEnumerable<int> GetVisibleToEnemiesNodes { }
-            public IEnumerable<int> GetPotentialEnemiesNodes { }
+            private Dictionary<FactType, HashSet<int>> nodesWithFactsPresent;       // Tracks which nodes have which facts present, for faster 'reverse' querying.
+            private Dictionary<EffectType, HashSet<int>> nodesWithEffectsPresent;   // Tracks which nodes have which effects present, for faster 'reverse' querying.
+
+            private Func<int, int> friendlyPresenceReader;
+            private Func<int, int> enemyPresenceReader;
+            private Func<int, int> dangerLevelReader;
+            private Func<int, bool> hasDangerFromUnknownSourceReader;
+            private Func<int, bool> unknownPresenceReader;
+            private Func<int, bool> isFriendlyAreaReader;
+            private Func<int, bool> isEnemyAreaReader;
+            private Func<int, bool> isContestedAreaReader;
+            private Func<int, bool> isClearReader;
+            private Func<int, bool> isControlledByTeamReader;
+            private Func<int, bool> isControlledByEnemiesReader;
+            private Func<int, bool> visibleToEnemiesReader;
+            private Func<int, bool> potentialEnemiesReader;
+
+            public NodeSetQuery(Dictionary<FactType, HashSet<int>> nodesWithFactsPresent, Dictionary<EffectType, HashSet<int>> nodesWithEffectsPresent, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> unknownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader) {
+                this.nodesWithFactsPresent = nodesWithFactsPresent;
+                this.nodesWithEffectsPresent = nodesWithEffectsPresent;
+                this.friendlyPresenceReader = friendlyPresenceReader;
+                this.enemyPresenceReader = enemyPresenceReader;
+                this.dangerLevelReader = dangerLevelReader;
+                this.hasDangerFromUnknownSourceReader = hasDangerFromUnknownSourceReader;
+                this.unknownPresenceReader = unknownPresenceReader;
+                this.isFriendlyAreaReader = isFriendlyAreaReader;
+                this.isEnemyAreaReader = isEnemyAreaReader;
+                this.isContestedAreaReader = isContestedAreaReader;
+                this.isClearReader = isClearReader;
+                this.isControlledByTeamReader = isControlledByTeamReader;
+                this.isControlledByEnemiesReader = isControlledByEnemiesReader;
+                this.visibleToEnemiesReader = visibleToEnemiesReader;
+                this.potentialEnemiesReader = potentialEnemiesReader;
+            }
+
+            public IEnumerable<int> GetFriendlyPresenceNodes() {
+                return FactBasedConditionLoop(n => friendlyPresenceReader(n) > 0, FactType.FriendlyPresence);
+            }
+            public IEnumerable<int> GetEnemyPresenceNodes() {
+                return FactBasedConditionLoop(n => enemyPresenceReader(n) > 0, FactType.EnemyPresence);
+            }
+            public IEnumerable<int> GetDangerNodes() {
+                return FactBasedConditionLoop(n => dangerLevelReader(n) > 0 && !hasDangerFromUnknownSourceReader(n), FactType.Danger);
+            }
+            public IEnumerable<int> GetDangerFromUnknownSourceNodes() {
+                return FactBasedConditionLoop(hasDangerFromUnknownSourceReader, FactType.DangerFromUnknownSource);
+            }
+            public IEnumerable<int> GetUnknownPresenceNodes() {
+                return FactBasedConditionLoop(unknownPresenceReader, FactType.FriendlyPresence, FactType.EnemyPresence);
+            }
+            public IEnumerable<int> GetFriendlyAreaNodes() {
+                return FactBasedConditionLoop(isFriendlyAreaReader, FactType.FriendlyPresence);
+            }
+            public IEnumerable<int> GetEnemyAreaNodes() {
+                return FactBasedConditionLoop(isEnemyAreaReader, FactType.EnemyPresence);
+            }
+            public IEnumerable<int> GetContestedAreaNodes() {
+                return FactBasedConditionLoop(isContestedAreaReader, FactType.FriendlyPresence, FactType.EnemyPresence);
+            }
+            public IEnumerable<int> GetClearNodes() {
+                return EffectBasedConditionLoop(isClearReader, EffectType.Clear);
+            }
+            public IEnumerable<int> GetControlledByTeamNodes() {
+                return EffectBasedConditionLoop(isControlledByTeamReader, EffectType.Controlled);
+            }
+            public IEnumerable<int> GetControlledByEnemiesNodes() {
+                return EffectBasedConditionLoop(isControlledByEnemiesReader, EffectType.ControlledByEnemy);
+            }
+            public IEnumerable<int> GetVisibleToEnemiesNodes() {
+                return EffectBasedConditionLoop(visibleToEnemiesReader, EffectType.VisibleToEnemies);
+            }
+            public IEnumerable<int> GetPotentialEnemiesNodes() {
+                return EffectBasedConditionLoop(potentialEnemiesReader, EffectType.PotentialEnemies);
+            }
+
+            private IEnumerable<int> FactBasedConditionLoop(Func<int, bool> condition, params FactType[] ts) {
+                HashSet<int> candidates;
+                if (ts.Length == 1) candidates = nodesWithFactsPresent[ts[0]];
+                else {
+                    candidates = new HashSet<int>();
+                    foreach(FactType t in ts) { candidates.UnionWith(nodesWithFactsPresent[t]); }
+                }
+                foreach (int n in candidates) {
+                    if (condition(n)) yield return n;
+                }
+            }
+            private IEnumerable<int> EffectBasedConditionLoop(Func<int, bool> condition, params EffectType[] ts) {
+                HashSet<int> candidates;
+                if (ts.Length == 1) candidates = nodesWithEffectsPresent[ts[0]];
+                else {
+                    candidates = new HashSet<int>();
+                    foreach (EffectType t in ts) { candidates.UnionWith(nodesWithEffectsPresent[t]); }
+                }
+                foreach (int n in candidates) {
+                    if (condition(n)) yield return n;
+                }
+            }
         }
 
         /* Class which is used by clients to read the current state of a Node. Data is not stored in this manner
