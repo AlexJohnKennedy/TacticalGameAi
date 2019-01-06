@@ -174,6 +174,21 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             return new DynamicState(facts);
         }
         
+        public static void CheckTestDynamicStateNodeSets(DynamicState toTest) {
+            DynamicState.NodeSetQuery set = toTest.NodeSetQueryObject;
+
+            CollectionAssert.AreEquivalent(new int[] { 0, 4 }, set.GetFriendlyPresenceNodes());
+            CollectionAssert.AreEquivalent(new int[] { 0, 4 }, set.GetFriendlyAreaNodes());
+            CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetEnemyAreaNodes());
+            CollectionAssert.AreEquivalent(new int[] { }, set.GetContestedAreaNodes());
+            CollectionAssert.AreEquivalent(new int[] { 5 }, set.GetDangerFromUnknownSourceNodes());
+            CollectionAssert.AreEquivalent(new int[] { 0, 1, 3, 4 }, set.GetClearNodes());
+            CollectionAssert.AreEquivalent(new int[] { 2, 1, 5 }, set.GetVisibleToEnemiesNodes());
+            CollectionAssert.AreEquivalent(new int[] { 5, 6 }, set.GetPotentialEnemiesNodes());
+            CollectionAssert.AreEquivalent(new int[] { 3, 0, 4 }, set.GetControlledByTeamNodes());
+            CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetControlledByEnemiesNodes());
+        }
+
         public static void CheckTestDynamicState(DynamicState toTest) {
             // Test node data reads
             Assert.IsTrue(toTest.GetNodeData(0).FriendlyPresence == 2);

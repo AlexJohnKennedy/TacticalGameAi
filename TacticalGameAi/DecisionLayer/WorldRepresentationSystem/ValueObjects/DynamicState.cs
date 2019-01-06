@@ -300,10 +300,15 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             }
             private IEnumerable<int> EffectBasedConditionLoop(Func<int, bool> condition, params EffectType[] ts) {
                 HashSet<int> candidates;
-                if (ts.Length == 1) candidates = nodesWithEffectsPresent[ts[0]];
+                if (ts.Length == 1 && FactAndEffectRules.FactsWhichInclude(ts[0]).Count == 0) candidates = nodesWithEffectsPresent[ts[0]];
                 else {
                     candidates = new HashSet<int>();
-                    foreach (EffectType t in ts) { candidates.UnionWith(nodesWithEffectsPresent[t]); }
+                    foreach (EffectType t in ts) {
+                        candidates.UnionWith(nodesWithEffectsPresent[t]);
+                        foreach(FactType f in FactAndEffectRules.FactsWhichInclude(t)) {
+                            candidates.UnionWith(nodesWithFactsPresent[f]);
+                        }
+                    }
                 }
                 foreach (int n in candidates) {
                     if (condition(n)) yield return n;

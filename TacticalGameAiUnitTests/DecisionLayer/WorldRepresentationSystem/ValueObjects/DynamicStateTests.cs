@@ -12,6 +12,12 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
     class DynamicStateTests {
 
         [Test]
+        public void DynamicState_ReadNodeSetData_ReturnsCorrectInformation() {
+            DynamicState d = HardCodedStateCreator.CreateTestDynamicState();
+            HardCodedStateCreator.CheckTestDynamicStateNodeSets(d);
+        }
+
+        [Test]
         public void DynamicState_ReadNodeData_ReturnsCorrectInformation() {
             DynamicState d = null;
             for (int i = 0; i < 1; i++) {
