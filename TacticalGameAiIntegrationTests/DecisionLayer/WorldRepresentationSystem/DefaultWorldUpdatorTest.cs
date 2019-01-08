@@ -17,10 +17,16 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
         private Mock<IDynamicStateChange> change3;  // Mock DynamicStateChange: spotting 3 enemies at node 2
         private Mock<IDynamicStateChange> change4;  // Mock DynamicStateChange: 2 last known friendlies at node 6, 1 last known enemy at node 8
         private Mock<IDynamicStateChange> changeToRevert1;  // Spotting 1 enemy at node 5, and losing friendlies at node 0, and danger from unknown source leaving. (applied and reverted after change1)
+        private int time1 = 50;   // Specify an arbitrary 'time learned' for each change.
+        private int time2 = 70;
+        private int time3 = 90;
+        private int time4 = 110;
+        private int timeToRevert1 = 130;
 
         public DefaultWorldUpdatorTest() {
             change1 = new Mock<IDynamicStateChange>();
             change1.Setup(c => c.AffectedNodes).Returns(new int[] { 0 });
+            change1.Setup(c => c.TimeLearned).Returns(time1);
             Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> beforeFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
                 { 0, new KeyValuePair<FactType, int>[] { } },
             };
@@ -31,6 +37,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             change1.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
             change2 = new Mock<IDynamicStateChange>();
             change2.Setup(c => c.AffectedNodes).Returns(new int[] { 4, 5 });
+            change2.Setup(c => c.TimeLearned).Returns(time2);
             beforeFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
                 { 4, new KeyValuePair<FactType, int>[] { } },
                 { 5, new KeyValuePair<FactType, int>[] { } },
@@ -43,6 +50,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             change2.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
             change3 = new Mock<IDynamicStateChange>();
             change3.Setup(c => c.AffectedNodes).Returns(new int[] { 2 });
+            change3.Setup(c => c.TimeLearned).Returns(time3);
             beforeFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
                 { 2, new KeyValuePair<FactType, int>[] { } },
             };
@@ -53,6 +61,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             change3.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
             change4 = new Mock<IDynamicStateChange>();
             change4.Setup(c => c.AffectedNodes).Returns(new int[] { 6, 8 });
+            change4.Setup(c => c.TimeLearned).Returns(time4);
             beforeFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
                 { 6, new KeyValuePair<FactType, int>[] { } },
                 { 8, new KeyValuePair<FactType, int>[] { } }
@@ -66,6 +75,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
 
             changeToRevert1 = new Mock<IDynamicStateChange>();
             changeToRevert1.Setup(c => c.AffectedNodes).Returns(new int[] { 0, 5 });
+            changeToRevert1.Setup(c => c.TimeLearned).Returns(timeToRevert1);
             beforeFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
                 { 0, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.FriendlyPresence, 2)} },
                 { 5, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.DangerFromUnknownSource, 5)} }
