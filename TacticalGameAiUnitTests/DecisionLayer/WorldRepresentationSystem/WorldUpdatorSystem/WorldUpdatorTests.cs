@@ -33,11 +33,15 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             Mock<IFactAdder> enemyAdder = new Mock<IFactAdder>();
             Mock<IFactAdder> dangerAdder = new Mock<IFactAdder>();
             Mock<IFactAdder> unknownDangerAdder = new Mock<IFactAdder>();
+            Mock<IFactAdder> lastKnownFriendlyAdder = new Mock<IFactAdder>();
+            Mock<IFactAdder> lastKnownEnemyAdder = new Mock<IFactAdder>();
             Dictionary<FactType, IFactAdder> dict = new Dictionary<FactType, IFactAdder> {
-                { FactType.FriendlyPresence,        friendlyAdder.Object      },
-                { FactType.EnemyPresence,           enemyAdder.Object         },
-                { FactType.Danger,                  dangerAdder.Object        },
-                { FactType.DangerFromUnknownSource, unknownDangerAdder.Object }
+                { FactType.FriendlyPresence,        friendlyAdder.Object       },
+                { FactType.EnemyPresence,           enemyAdder.Object          },
+                { FactType.Danger,                  dangerAdder.Object         },
+                { FactType.DangerFromUnknownSource, unknownDangerAdder.Object  },
+                { FactType.LastKnownEnemyPosition,  lastKnownEnemyAdder.Object },
+                { FactType.LastKnownFriendlyPosition, lastKnownFriendlyAdder.Object }
             };
             WorldUpdator toTest = new WorldUpdator(dict);
 
@@ -104,11 +108,15 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             Mock<IFactAdder> enemyAdder = new Mock<IFactAdder>();
             Mock<IFactAdder> dangerAdder = new Mock<IFactAdder>();
             Mock<IFactAdder> unknownDangerAdder = new Mock<IFactAdder>();
+            Mock<IFactAdder> lastKnownFriendlyAdder = new Mock<IFactAdder>();
+            Mock<IFactAdder> lastKnownEnemyAdder = new Mock<IFactAdder>();
             Dictionary<FactType, IFactAdder> dict = new Dictionary<FactType, IFactAdder> {
-                { FactType.FriendlyPresence,        friendlyAdder.Object      },
-                { FactType.EnemyPresence,           enemyAdder.Object         },
-                { FactType.Danger,                  dangerAdder.Object        },
-                { FactType.DangerFromUnknownSource, unknownDangerAdder.Object }
+                { FactType.FriendlyPresence,        friendlyAdder.Object       },
+                { FactType.EnemyPresence,           enemyAdder.Object          },
+                { FactType.Danger,                  dangerAdder.Object         },
+                { FactType.DangerFromUnknownSource, unknownDangerAdder.Object  },
+                { FactType.LastKnownEnemyPosition,  lastKnownEnemyAdder.Object },
+                { FactType.LastKnownFriendlyPosition, lastKnownFriendlyAdder.Object }
             };
             WorldUpdator toTest = new WorldUpdator(dict);
 

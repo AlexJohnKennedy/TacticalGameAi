@@ -133,7 +133,8 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(!toTest.GetEdge(0, 1).IsCausingClearEffect && !toTest.GetEdge(0, 1).IsCausingControlledByTeamEffect);     // Node zero no longer clearing 1
             Assert.IsTrue(!toTest.GetEdge(0, 3).IsCausingClearEffect && !toTest.GetEdge(0, 3).IsCausingControlledByTeamEffect);     // Node zero no longer clearing or controlling 3
             Assert.IsTrue(toTest.GetEdge(2, 1).IsCausingVisibleToEnemiesEffect && toTest.GetEdge(2, 5).IsCausingVisibleToEnemiesEffect);
-            Assert.IsTrue(toTest.GetEdge(5, 1).IsCausingPotentialEnemiesEffect);
+            Assert.IsTrue(toTest.GetEdge(5, 1).IsCausingPotentialEnemiesEffect && toTest.GetEdge(8, 6).IsCausingPotentialEnemiesEffect && toTest.GetEdge(8, 7).IsCausingPotentialEnemiesEffect);
+
         }
 
         [Test]

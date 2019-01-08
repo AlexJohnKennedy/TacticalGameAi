@@ -8,26 +8,31 @@ using System.Collections.Generic;
 
 namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueObjects {
     public static class HardCodedStateCreator {
+        private static int numNodes = 10;   // Let's test this with 10 areas
+
         public static StaticState CreateTestStaticState() {
             return new StaticState(PrepareNodeData(), PrepareEdgeData());
         }
 
         private static StaticState.AreaNode[] PrepareNodeData() {
-            StaticState.AreaNode[] toRet = new StaticState.AreaNode[8];
+            StaticState.AreaNode[] toRet = new StaticState.AreaNode[numNodes];
             toRet[0] = new StaticState.AreaNode(0, 0, 8, 3, false, 5, 5, false, false, false);
             toRet[1] = new StaticState.AreaNode(1, 0, 0, 0, true, 1, 8, false, false, false);
             toRet[2] = new StaticState.AreaNode(2, 1, 6, 1, false, 3, 3, false, false, true);
             toRet[3] = new StaticState.AreaNode(3, 0, 0, 0, false, 1, 5, true, false, false);
             toRet[4] = new StaticState.AreaNode(4, 0, 0, 5, false, 2, 1, true, false, false);
             toRet[5] = new StaticState.AreaNode(5, 1, 3, 1, false, 6, 2, false, false, true);
-            toRet[6] = new StaticState.AreaNode(6, 1, 0, 0, false, 3, 5, true, false, false);
+            toRet[6] = new StaticState.AreaNode(6, 1, 0, 0, true, 3, 5, false, true, false);
             toRet[7] = new StaticState.AreaNode(7, 2, 0, 0, false, 1, 8, true, false, false);
+            toRet[8] = new StaticState.AreaNode(8, 2, 0, 0, false, 1, 8, true, false, false);
+            toRet[9] = new StaticState.AreaNode(9, 2, 0, 0, false, 1, 5, true, false, false);
+
             return toRet;
         }
         private static StaticState.AreaEdge[,] PrepareEdgeData() {
-            StaticState.AreaEdge[,] toRet = new StaticState.AreaEdge[8, 8];
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++) {
+            StaticState.AreaEdge[,] toRet = new StaticState.AreaEdge[numNodes, numNodes];
+            for (int i = 0; i < numNodes; i++) {
+                for (int j = 0; j < numNodes; j++) {
                     toRet[i, j] = new StaticState.AreaEdge(i, j, false, false, 0, 0, 0, 0, false);  // Defaults
                 }
             }
@@ -48,6 +53,12 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             toRet[6, 5] = new StaticState.AreaEdge(6, 5, true, true, 5, 5, -2, 0, false);
             toRet[6, 7] = new StaticState.AreaEdge(6, 7, true, true, 5, 5, 6, 3, true);
             toRet[7, 6] = new StaticState.AreaEdge(7, 6, true, true, 5, 5, -6, 0, false);
+            toRet[6, 8] = new StaticState.AreaEdge(6, 8, true, true, 5, 5, 0, 0, false);
+            toRet[8, 6] = new StaticState.AreaEdge(8, 6, true, true, 5, 5, 0, 0, false);
+            toRet[7, 8] = new StaticState.AreaEdge(7, 8, true, true, 5, 5, 1, 0, false);
+            toRet[8, 7] = new StaticState.AreaEdge(8, 7, true, true, 5, 5, -1, 0, false);
+            toRet[8, 9] = new StaticState.AreaEdge(8, 9, true, false, 5, 5, 0, 0, false);
+            toRet[9, 8] = new StaticState.AreaEdge(9, 8, true, false, 5, 5, 0, 0, false);
 
             return toRet;
         }
@@ -55,7 +66,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         public static void CheckTestStaticState(StaticState s) {
             // Assert the overwatch locations
             Func<int, bool> reader = s.IsOverwatchLocation();
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < numNodes; i++) {
                 // Should be overwatch locations
                 if (i == 2 || i == 5) {
                     Assert.IsTrue(reader(i));
@@ -72,8 +83,8 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Func<int, int, bool> vis = s.CanSeeReader();
             Func<int, int, bool> con = s.HasControlOverReader();
             Func<int, int, bool> trav = s.IsConnectedReader();
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++) {
+            for (int i = 0; i < numNodes; i++) {
+                for (int j = 0; j < numNodes; j++) {
                     // Should be visible
                     if (   (i == 0 && j == 1 || i == 1 && j == 0)
                         || (i == 0 && j == 3 || i == 3 && j == 0)
@@ -83,6 +94,9 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                         || (i == 2 && j == 5 || i == 5 && j == 2)
                         || (i == 5 && j == 6 || i == 6 && j == 5)
                         || (i == 6 && j == 7 || i == 7 && j == 6)
+                        || (i == 6 && j == 8 || i == 8 && j == 6)
+                        || (i == 7 && j == 8 || i == 8 && j == 7)
+                        || (i == 8 && j == 9 || i == 9 && j == 8)
                        ) {
                         Assert.IsTrue(vis(i, j));
                         Assert.IsTrue(s.GetEdge(i, j).CanSee);
@@ -115,11 +129,13 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                         || (i == 2 && j == 5 || i == 5 && j == 2)
                         || (i == 5 && j == 6 || i == 6 && j == 5)
                         || (i == 6 && j == 7 || i == 7 && j == 6)
+                        || (i == 6 && j == 8 || i == 8 && j == 6)
+                        || (i == 7 && j == 8 || i == 8 && j == 7)
                        ) {
                         Assert.IsTrue(trav(i, j));
                         Assert.IsTrue(s.GetEdge(i, j).IsConnected);
                     }
-                    // Should NOT be visible
+                    // Should NOT be traversable
                     else {
                         Assert.IsFalse(trav(i, j));
                         Assert.IsFalse(s.GetEdge(i, j).IsConnected);
@@ -129,7 +145,6 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         }
 
         public static DynamicState CreateTestDynamicState() {
-            int numNodes = 9;   // Let's test this with 9 areas
             var facts = new Dictionary<FactType, Fact>[numNodes];
 
             // Set up the effects that each fact is causing.
@@ -184,6 +199,9 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             };
             facts[8] = new Dictionary<FactType, Fact> { { FactType.LastKnownEnemyPosition, new Fact(FactType.LastKnownEnemyPosition, 1, e) } };
 
+            // Node 9 has no facts.
+            facts[9] = new Dictionary<FactType, Fact> { };
+
             return new DynamicState(facts);
         }
         
@@ -200,7 +218,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             CollectionAssert.AreEquivalent(new int[] { 5, 6, 7, 8 }, set.GetPotentialEnemiesNodes());
             CollectionAssert.AreEquivalent(new int[] { 3, 0, 4 }, set.GetControlledByTeamNodes());
             CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetControlledByEnemiesNodes());
-            CollectionAssert.AreEquivalent(new int[] { 1, 3, 5, 6, 7, 8 }, set.GetNoKnownPresenceNodes());
+            CollectionAssert.AreEquivalent(new int[] { 1, 3, 5, 6, 7, 8, 9 }, set.GetNoKnownPresenceNodes());
             CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetEnemyPresenceNodes());
             CollectionAssert.AreEquivalent(new int[] { }, set.GetDangerNodes());
         }
@@ -246,6 +264,8 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetNodeData(1).NoKnownPresence);
             Assert.IsTrue(toTest.GetNodeData(3).NoKnownPresence);
             Assert.IsTrue(toTest.GetNodeData(7).NoKnownPresence);
+            Assert.IsTrue(toTest.GetNodeData(8).NoKnownPresence);
+            Assert.IsTrue(toTest.GetNodeData(9).NoKnownPresence);
             Assert.IsTrue(toTest.GetNodeData(7).PotentialEnemies);
             Assert.IsTrue(!toTest.GetNodeData(0).NoKnownPresence);
             Assert.IsTrue(toTest.GetNodeData(0).VisibleToFriendlies);
@@ -286,14 +306,16 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Func<int, int, bool> clearing = toTest.CausingClearEffectReader();
             Assert.IsTrue(clearing(0, 1) && clearing(0, 3) && !clearing(0, 2) && !clearing(2, 1) && clearing(4, 3));
             Func<int, int, bool> causingPotentials = toTest.CausingPotentialEnemiesEffectReader();
-            Assert.IsTrue(causingPotentials(5, 1) && causingPotentials(5, 6) && !causingPotentials(2, 1));
+            Assert.IsTrue(causingPotentials(5, 1) && causingPotentials(5, 6) && !causingPotentials(2, 1) && causingPotentials(8, 6) && causingPotentials(8, 7));
             Func<int, int, bool> causingVisible = toTest.CausingVisibleToEnemiesEffectReader();
             Assert.IsTrue(causingVisible(2, 1) && !causingVisible(2, 7) && !causingVisible(1, 5));
 
             Assert.IsTrue(toTest.GetEdge(0, 1).IsCausingClearEffect && !toTest.GetEdge(0, 1).IsCausingControlledByTeamEffect);
             Assert.IsTrue(toTest.GetEdge(0, 3).IsCausingClearEffect && toTest.GetEdge(0, 3).IsCausingControlledByTeamEffect);
             Assert.IsTrue(toTest.GetEdge(2, 1).IsCausingVisibleToEnemiesEffect && toTest.GetEdge(2, 5).IsCausingVisibleToEnemiesEffect);
-            Assert.IsTrue(toTest.GetEdge(5, 1).IsCausingPotentialEnemiesEffect);
+            Assert.IsTrue(toTest.GetEdge(5, 1).IsCausingPotentialEnemiesEffect && toTest.GetEdge(8, 6).IsCausingPotentialEnemiesEffect && toTest.GetEdge(8, 7).IsCausingPotentialEnemiesEffect);
+
+            // TODO: 8 - Implement specfic logic to define what happens when you call a node edge read from a node, to itself. I.e. dynamicStateInstance.GetEdge(x, x).friendlies;. Possibly not allowed?
         }
     }
 }
