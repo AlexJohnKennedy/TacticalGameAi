@@ -116,7 +116,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Func<int, bool> clear = toTest.IsClearReader();
             Assert.IsTrue(!clear(0) && !clear(1) && !clear(2) && clear(3) && !clear(7));    // Node zero and one are no longer clear
             Func<int, bool> potentials = toTest.PotentialEnemiesReader();
-            Assert.IsTrue(potentials(6) && potentials(1) && !potentials(7) && !potentials(7) && potentials(5));     // Node 1 should now have potential enemies
+            Assert.IsTrue(potentials(6) && potentials(1) && potentials(7) && !potentials(2) && potentials(5) && potentials(8));     // Node 1 should now have potential enemies
             Func<int, bool> vis = toTest.VisibleToEnemiesReader();
             Assert.IsTrue(vis(1) && vis(2) && !vis(3) && !vis(0) && !vis(7));
             Func<int, int> danger = toTest.KnownDangerLevelReader();

@@ -129,8 +129,8 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         }
 
         public static DynamicState CreateTestDynamicState() {
-            int numNodes = 8;   // Let's test this with 8 areas
-            var facts = new Dictionary<FactType, Fact>[8];
+            int numNodes = 9;   // Let's test this with 9 areas
+            var facts = new Dictionary<FactType, Fact>[numNodes];
 
             // Set up the effects that each fact is causing.
             // Node 0 causes 'clear' / 'visibleToFriendlies' on node 1 and 3, and 'control' on 3
@@ -170,9 +170,19 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             };
             facts[5] = new Dictionary<FactType, Fact> { { FactType.DangerFromUnknownSource, new Fact(FactType.DangerFromUnknownSource, 5, e) } };
 
-            // Node 6 and 7 has no facts
-            facts[6] = new Dictionary<FactType, Fact> { };
+            // Node 6 has LastKnownFriendlyPosition with value 2, and causes no Effects
+            e = new List<Effect> { };
+            facts[6] = new Dictionary<FactType, Fact> { { FactType.LastKnownFriendlyPosition, new Fact(FactType.LastKnownFriendlyPosition, 2, e) } };
+
+            // Node 7 has no facts.
             facts[7] = new Dictionary<FactType, Fact> { };
+
+            // Node 8 has LastKnownEnemyPosition with value 1, and causes potential enemies on all nodes traversable from node 8 (node 6 and 7)
+            e = new List<Effect> {
+                new Effect(EffectType.PotentialEnemies, 0, 6, 8),
+                new Effect(EffectType.PotentialEnemies, 0, 7, 8)
+            };
+            facts[8] = new Dictionary<FactType, Fact> { { FactType.LastKnownEnemyPosition, new Fact(FactType.LastKnownEnemyPosition, 1, e) } };
 
             return new DynamicState(facts);
         }
@@ -187,10 +197,10 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             CollectionAssert.AreEquivalent(new int[] { 5 }, set.GetDangerFromUnknownSourceNodes());
             CollectionAssert.AreEquivalent(new int[] { 0, 1, 3, 4 }, set.GetClearNodes());
             CollectionAssert.AreEquivalent(new int[] { 2, 1, 5 }, set.GetVisibleToEnemiesNodes());
-            CollectionAssert.AreEquivalent(new int[] { 5, 6 }, set.GetPotentialEnemiesNodes());
+            CollectionAssert.AreEquivalent(new int[] { 5, 6, 7, 8 }, set.GetPotentialEnemiesNodes());
             CollectionAssert.AreEquivalent(new int[] { 3, 0, 4 }, set.GetControlledByTeamNodes());
             CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetControlledByEnemiesNodes());
-            CollectionAssert.AreEquivalent(new int[] { 1, 3, 5, 6, 7 }, set.GetNoKnownPresenceNodes());
+            CollectionAssert.AreEquivalent(new int[] { 1, 3, 5, 6, 7, 8 }, set.GetNoKnownPresenceNodes());
             CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetEnemyPresenceNodes());
             CollectionAssert.AreEquivalent(new int[] { }, set.GetDangerNodes());
         }
@@ -202,6 +212,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetNodeData(0).IsFriendlyArea);
             Assert.IsTrue(toTest.GetNodeData(0).IsClear);
             Assert.IsTrue(toTest.GetNodeData(0).IsControlledByTeam);
+            Assert.IsTrue(toTest.GetNodeData(0).LastKnownEnemyPosition == 0);
             Assert.IsTrue(!toTest.GetNodeData(1).IsControlledByTeam);
             Assert.IsTrue(toTest.GetNodeData(1).IsClear);
             Assert.IsTrue(toTest.GetNodeData(1).VisibleToEnemies);
@@ -215,6 +226,8 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetNodeData(3).IsClear);
             Assert.IsTrue(toTest.GetNodeData(3).IsControlledByTeam);
             Assert.IsTrue(!toTest.GetNodeData(3).IsControlledByEnemies);
+            Assert.IsTrue(toTest.GetNodeData(3).LastKnownEnemyPosition == 0);
+            Assert.IsTrue(toTest.GetNodeData(3).LastKnownFriendlyPosition == 0);
             Assert.IsTrue(!toTest.GetNodeData(4).IsControlledByEnemies);
             Assert.IsTrue(toTest.GetNodeData(4).FriendlyPresence == 1);
             Assert.IsTrue(toTest.GetNodeData(4).IsFriendlyArea);
@@ -225,24 +238,31 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetNodeData(6).PotentialEnemies);
             Assert.IsTrue(toTest.GetNodeData(6).IsEnemyArea == false);
             Assert.IsTrue(toTest.GetNodeData(6).IsControlledByTeam == false);
+            Assert.IsTrue(toTest.GetNodeData(6).LastKnownFriendlyPosition == 2);
+            Assert.IsTrue(toTest.GetNodeData(6).LastKnownEnemyPosition == 0);
             Assert.IsTrue(!toTest.GetNodeData(7).IsControlledByTeam);
             Assert.IsTrue(toTest.GetNodeData(7).EnemyPresence == 0);
             Assert.IsTrue(toTest.GetNodeData(7).FriendlyPresence == 0);
             Assert.IsTrue(toTest.GetNodeData(1).NoKnownPresence);
             Assert.IsTrue(toTest.GetNodeData(3).NoKnownPresence);
             Assert.IsTrue(toTest.GetNodeData(7).NoKnownPresence);
+            Assert.IsTrue(toTest.GetNodeData(7).PotentialEnemies);
             Assert.IsTrue(!toTest.GetNodeData(0).NoKnownPresence);
-
             Assert.IsTrue(toTest.GetNodeData(0).VisibleToFriendlies);
             Assert.IsTrue(toTest.GetNodeData(1).VisibleToFriendlies);
             Assert.IsTrue(toTest.GetNodeData(3).VisibleToFriendlies);
             Assert.IsTrue(toTest.GetNodeData(4).VisibleToFriendlies);
             Assert.IsTrue(!toTest.GetNodeData(2).VisibleToFriendlies);
+            Assert.IsTrue(toTest.GetNodeData(8).LastKnownEnemyPosition == 1);
+            Assert.IsTrue(!toTest.GetNodeData(8).VisibleToEnemies);
+            Assert.IsTrue(toTest.GetNodeData(8).PotentialEnemies);
+            Assert.IsTrue(toTest.GetNodeData(8).EnemyPresence == 0);
+            Assert.IsTrue(!toTest.GetNodeData(8).IsEnemyArea);
+            Assert.IsTrue(!toTest.GetNodeData(8).IsContestedArea);
 
             // Do the same tests but using the graph-subset reader functions
             Func<int, bool> visf = toTest.VisibleToFriendliesReader();
             Assert.IsTrue(visf(0) && visf(1) && visf(3) && visf(4) && !visf(5) && !visf(6) && !visf(7) && !visf(2)); 
-
             Func<int, int> friends = toTest.KnownFriendlyPresenceReader();
             Assert.IsTrue(friends(0) == 2);
             Assert.IsTrue(friends(1) == 0);
@@ -252,11 +272,15 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Func<int, bool> clear = toTest.IsClearReader();
             Assert.IsTrue(clear(0) && clear(1) && !clear(2) && clear(3) && !clear(7));
             Func<int, bool> potentials = toTest.PotentialEnemiesReader();
-            Assert.IsTrue(potentials(6) && !potentials(1) && !potentials(7) && !potentials(7) && potentials(5));
+            Assert.IsTrue(potentials(6) && !potentials(1) && potentials(7) && potentials(8) && potentials(5) && !potentials(4));
             Func<int, bool> vis = toTest.VisibleToEnemiesReader();
             Assert.IsTrue(vis(1) && vis(2) && !vis(3) && !vis(0) && !vis(7));
             Func<int, bool> noPres = toTest.HasNoKnownPresenceReader();
             Assert.IsTrue(noPres(7) && noPres(5) && !noPres(2));
+            Func<int, int> lastE = toTest.LastKnownEnemyPositionReader();
+            Assert.IsTrue(lastE(8) == 1 && lastE(5) == 0 && lastE(3) == 0);
+            Func<int, int> lastF = toTest.LastKnownFriendlyPositionReader();
+            Assert.IsTrue(lastF(6) == 2 && lastF(8) == 0 && lastF(5) == 0 && lastF(3) == 0);
 
             // Test edges
             Func<int, int, bool> clearing = toTest.CausingClearEffectReader();
