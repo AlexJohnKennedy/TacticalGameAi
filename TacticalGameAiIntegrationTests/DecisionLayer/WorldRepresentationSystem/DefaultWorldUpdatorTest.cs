@@ -15,6 +15,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
         private Mock<IDynamicStateChange> change1;  // Mock DynamicStateChange: spotting 2 friendlies at node 0
         private Mock<IDynamicStateChange> change2;  // Mock DynamicStateChange: spotting 1 friendly at node 4 and DangerfromunknownSource at node 5
         private Mock<IDynamicStateChange> change3;  // Mock DynamicStateChange: spotting 3 enemies at node 2
+        private Mock<IDynamicStateChange> change4;  // Mock DynamicStateChange: 2 last known friendlies at node 6, 1 last known enemy at node 8
         private Mock<IDynamicStateChange> changeToRevert1;  // Spotting 1 enemy at node 5, and losing friendlies at node 0, and danger from unknown source leaving. (applied and reverted after change1)
 
         public DefaultWorldUpdatorTest() {
@@ -50,6 +51,18 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
                 { 2, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.EnemyPresence, 3)} },
             };
             change3.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
+            change4 = new Mock<IDynamicStateChange>();
+            change4.Setup(c => c.AffectedNodes).Returns(new int[] { 6, 8 });
+            beforeFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
+                { 6, new KeyValuePair<FactType, int>[] { } },
+                { 8, new KeyValuePair<FactType, int>[] { } }
+            };
+            change4.Setup(c => c.GetFactsBefore()).Returns(beforeFacts);
+            afterFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
+                { 6, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.LastKnownFriendlyPosition, 2)} },
+                { 8, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.LastKnownEnemyPosition, 1)} },
+            };
+            change4.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
 
             changeToRevert1 = new Mock<IDynamicStateChange>();
             changeToRevert1.Setup(c => c.AffectedNodes).Returns(new int[] { 0, 5 });
@@ -84,23 +97,25 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             WorldRepresentation changed1 = worldUpdator.ApplyDynamicStateChange(originalWorld, change1.Object);
             WorldRepresentation changed2 = worldUpdator.ApplyDynamicStateChange(changed1, change2.Object);
             WorldRepresentation changed3 = worldUpdator.ApplyDynamicStateChange(changed2, change3.Object);
+            WorldRepresentation changed4 = worldUpdator.ApplyDynamicStateChange(changed3, change4.Object);
 
-            HardCodedStateCreator.CheckTestStaticState(changed3.StaticState);
-            HardCodedStateCreator.CheckTestDynamicState(changed3.DynamicState);
+            HardCodedStateCreator.CheckTestStaticState(changed4.StaticState);
+            HardCodedStateCreator.CheckTestDynamicState(changed4.DynamicState);
 
-            changed1 = worldUpdator.ApplyDynamicStateChange(originalWorld, change2.Object);
+            changed1 = worldUpdator.ApplyDynamicStateChange(originalWorld, change4.Object);
             changed2 = worldUpdator.ApplyDynamicStateChange(changed1, change3.Object);
             changed3 = worldUpdator.ApplyDynamicStateChange(changed2, change1.Object);
+            changed4 = worldUpdator.ApplyDynamicStateChange(changed3, change2.Object);
 
-            HardCodedStateCreator.CheckTestStaticState(changed3.StaticState);
-            HardCodedStateCreator.CheckTestDynamicState(changed3.DynamicState);
+            HardCodedStateCreator.CheckTestStaticState(changed4.StaticState);
+            HardCodedStateCreator.CheckTestDynamicState(changed4.DynamicState);
 
 
-            changed1 = worldUpdator.ApplyDynamicStateChangesSequentially(originalWorld, change3.Object, change2.Object, change1.Object);
+            changed1 = worldUpdator.ApplyDynamicStateChangesSequentially(originalWorld, change3.Object, change2.Object, change1.Object, change4.Object);
             HardCodedStateCreator.CheckTestStaticState(changed1.StaticState);
             HardCodedStateCreator.CheckTestDynamicState(changed1.DynamicState);
 
-            changed2 = worldUpdator.ApplyDynamicStateChangesSequentially(originalWorld, change2.Object, change1.Object, change3.Object);
+            changed2 = worldUpdator.ApplyDynamicStateChangesSequentially(originalWorld, change2.Object, change4.Object, change1.Object, change3.Object);
             HardCodedStateCreator.CheckTestStaticState(changed2.StaticState);
             HardCodedStateCreator.CheckTestDynamicState(changed2.DynamicState);
         }
@@ -118,7 +133,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             }
 
             // Apply all changes, including the one to be reverted.
-            WorldRepresentation result = worldUpdator.ApplyDynamicStateChangesSequentially(originalWorld, change1.Object, change2.Object, change3.Object, changeToRevert1.Object);
+            WorldRepresentation result = worldUpdator.ApplyDynamicStateChangesSequentially(originalWorld, change1.Object, change2.Object, change3.Object, change4.Object, changeToRevert1.Object);
 
             // Simple assertions to see if the 'change to revert' event worked correctly..
             Func<int, int> friendlies = result.DynamicState.KnownFriendlyPresenceReader();
@@ -132,7 +147,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             }
 
             // Apply again, but in a different order. Any order should be valid so long as Change1 preceeds changeToRevert1. (since changetorevert1 removes a fact added by change1).
-            WorldRepresentation result2 = worldUpdator.ApplyDynamicStateChangesSequentially(originalWorld, change1.Object, changeToRevert1.Object, change3.Object, change2.Object);
+            WorldRepresentation result2 = worldUpdator.ApplyDynamicStateChangesSequentially(originalWorld, change4.Object, change1.Object, changeToRevert1.Object, change3.Object, change2.Object);
 
             friendlies = result2.DynamicState.KnownFriendlyPresenceReader();
             enemies = result2.DynamicState.KnownEnemyPresenceReader();
@@ -155,7 +170,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
 
             // Revert all the changes, which should result in an empty dynamic state once again.
             // Note we reverted in a different order than applied, valid here since none of these 3 changes have any 'before facts' (they only applied, not removed)
-            result = worldUpdator.RevertDynamicStateChangesSequentially(result, change2.Object, change1.Object, change3.Object);
+            result = worldUpdator.RevertDynamicStateChangesSequentially(result, change2.Object, change1.Object, change4.Object, change3.Object);
 
             HardCodedStateCreator.CheckTestStaticState(result.StaticState);      // Checks Static state.
             for (int i = 0; i < originalWorld.NumberOfNodes; i++) {
