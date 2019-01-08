@@ -105,6 +105,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> GetFactsAfter();      // Set of NEW facts and values to be added to each respective node.
         Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> GetFactsBefore();     // Set of OLD facts and values which are changed/removed by this change, for each respective ndoe.
         IEnumerable<int> AffectedNodes { get; }
+        int TimeLearned { get; }                                                        // A Timestamp in gametime which tells us when the a unit was made aware of these fact changes.
     }
 
 }
