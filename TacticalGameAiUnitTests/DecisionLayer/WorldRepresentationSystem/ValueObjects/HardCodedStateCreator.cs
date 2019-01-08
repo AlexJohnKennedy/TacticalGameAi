@@ -276,6 +276,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetNodeData(8).LastKnownEnemyPosition == 1);
             Assert.IsTrue(!toTest.GetNodeData(8).VisibleToEnemies);
             Assert.IsTrue(toTest.GetNodeData(8).PotentialEnemies);
+            Assert.IsTrue(!toTest.GetNodeData(9).PotentialEnemies);
             Assert.IsTrue(toTest.GetNodeData(8).EnemyPresence == 0);
             Assert.IsTrue(!toTest.GetNodeData(8).IsEnemyArea);
             Assert.IsTrue(!toTest.GetNodeData(8).IsContestedArea);
@@ -292,7 +293,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Func<int, bool> clear = toTest.IsClearReader();
             Assert.IsTrue(clear(0) && clear(1) && !clear(2) && clear(3) && !clear(7));
             Func<int, bool> potentials = toTest.PotentialEnemiesReader();
-            Assert.IsTrue(potentials(6) && !potentials(1) && potentials(7) && potentials(8) && potentials(5) && !potentials(4));
+            Assert.IsTrue(potentials(6) && !potentials(1) && potentials(7) && potentials(8) && potentials(5) && !potentials(4) && !potentials(9));
             Func<int, bool> vis = toTest.VisibleToEnemiesReader();
             Assert.IsTrue(vis(1) && vis(2) && !vis(3) && !vis(0) && !vis(7));
             Func<int, bool> noPres = toTest.HasNoKnownPresenceReader();

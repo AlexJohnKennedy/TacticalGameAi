@@ -25,14 +25,15 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             factAdderDict.Add(FactType.FriendlyPresence, new FactAdder(FactType.FriendlyPresence,
                     new IEffectAdder[] {
                         new VisibilityBasedEffectAdder(EffectType.Clear),
-                        new ControlBasedEffectAdder(EffectType.Controlled)
+                        new ControlBasedEffectAdder(EffectType.Controlled),
+                        new VisibilityBasedEffectAdder(EffectType.VisibleToFriendlies)
                     }
                 )
             );
             factAdderDict.Add(FactType.EnemyPresence, new FactAdder(FactType.EnemyPresence,
                     new IEffectAdder[] {
                         new VisibilityBasedEffectAdder(EffectType.VisibleToEnemies),
-                        new ControlBasedEffectAdder(EffectType.ControlledByEnemy)
+                        new ControlBasedEffectAdder(EffectType.ControlledByEnemy),
                     }
                 )
             );
@@ -44,6 +45,17 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             factAdderDict.Add(FactType.DangerFromUnknownSource, new FactAdder(FactType.DangerFromUnknownSource,
                     new IEffectAdder[] {
                         new CanBeSeenByBasedEffectAdder(EffectType.PotentialEnemies)
+                    }
+                )
+            );
+            factAdderDict.Add(FactType.LastKnownEnemyPosition, new FactAdder(FactType.LastKnownEnemyPosition,
+                    new IEffectAdder[] {
+                        new TraversabilityBasedEffectAdder(EffectType.PotentialEnemies)
+                    }
+                )
+            );
+            factAdderDict.Add(FactType.LastKnownFriendlyPosition, new FactAdder(FactType.LastKnownFriendlyPosition,
+                    new IEffectAdder[] {
                     }
                 )
             );

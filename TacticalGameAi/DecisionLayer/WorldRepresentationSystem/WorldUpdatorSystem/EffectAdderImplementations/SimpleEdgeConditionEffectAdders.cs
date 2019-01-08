@@ -18,6 +18,18 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         }
     }
 
+    public class TraversabilityBasedEffectAdder : IEffectAdder {
+        private EffectType effectType;
+
+        public TraversabilityBasedEffectAdder(EffectType effectType) {
+            this.effectType = effectType;
+        }
+
+        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
+            SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, world.StaticState.IsConnectedReader(), effectType);
+        }
+    }
+
     public class ControlBasedEffectAdder : IEffectAdder {
         private EffectType effectType;
 
