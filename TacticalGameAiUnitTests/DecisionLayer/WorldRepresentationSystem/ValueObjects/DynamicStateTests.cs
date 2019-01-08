@@ -50,14 +50,14 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             // Node zero no longer contains any friendlies. (Fact removal)
             // Node seven contains Danger
             Dictionary<int, Dictionary<FactType, Fact>> changes = new Dictionary<int, Dictionary<FactType, Fact>>();
-
+            int defaultTime = 100;
             // Node zero new facts -- we remove the friendly presence fact, which means that it now contains zero facts!
             Dictionary<FactType, Fact> nodeZero = new Dictionary<FactType, Fact> { };
             changes.Add(0, nodeZero);
 
             // Node seven new facts -- we now have one fact (the new one!). It previously had none.
             // The 'new' fact is a 'Danger' Fact, with a danger level of 4 (value = 4). Danger facttypes currently cause no effects, so an empty effect list is passed to the Fact.
-            Dictionary<FactType, Fact> nodeSeven = new Dictionary<FactType, Fact> { { FactType.Danger, new Fact(FactType.Danger, 4, new List<Effect>()) } };
+            Dictionary<FactType, Fact> nodeSeven = new Dictionary<FactType, Fact> { { FactType.Danger, new Fact(FactType.Danger, 4, defaultTime,  new List<Effect>()) } };
             changes.Add(7, nodeSeven);
 
             return changes;

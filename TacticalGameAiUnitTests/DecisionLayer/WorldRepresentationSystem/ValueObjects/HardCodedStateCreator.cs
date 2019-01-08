@@ -9,6 +9,7 @@ using System.Collections.Generic;
 namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueObjects {
     public static class HardCodedStateCreator {
         private static int numNodes = 10;   // Let's test this with 10 areas
+        private static int defaultTime = 0;
 
         public static StaticState CreateTestStaticState() {
             return new StaticState(PrepareNodeData(), PrepareEdgeData());
@@ -156,7 +157,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                 new Effect(EffectType.VisibleToFriendlies, 0, 3, 0),
                 new Effect(EffectType.Controlled, 0, 3, 0)
             };
-            facts[0] = new Dictionary<FactType, Fact> { { FactType.FriendlyPresence, new Fact(FactType.FriendlyPresence, 2, e) } };
+            facts[0] = new Dictionary<FactType, Fact> { { FactType.FriendlyPresence, new Fact(FactType.FriendlyPresence, 2, defaultTime, e) } };
 
             // Node 1 has no facts
             facts[1] = new Dictionary<FactType, Fact> { };
@@ -166,7 +167,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                 new Effect(EffectType.VisibleToEnemies, 0, 1, 2),
                 new Effect(EffectType.VisibleToEnemies, 0, 5, 2)
             };
-            facts[2] = new Dictionary<FactType, Fact> { { FactType.EnemyPresence, new Fact(FactType.EnemyPresence, 3, e) } };
+            facts[2] = new Dictionary<FactType, Fact> { { FactType.EnemyPresence, new Fact(FactType.EnemyPresence, 3, defaultTime, e) } };
 
             // Node 3 has no facts
             facts[3] = new Dictionary<FactType, Fact> { };
@@ -176,18 +177,18 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                 new Effect(EffectType.Clear, 0, 3, 4),
                 new Effect(EffectType.VisibleToFriendlies, 0, 3, 4),
             };
-            facts[4] = new Dictionary<FactType, Fact> { { FactType.FriendlyPresence, new Fact(FactType.FriendlyPresence, 1, e) } };
+            facts[4] = new Dictionary<FactType, Fact> { { FactType.FriendlyPresence, new Fact(FactType.FriendlyPresence, 1, defaultTime, e) } };
 
             // Node 5 causes 'potential enemies' on node 1 and 6
             e = new List<Effect> {
                 new Effect(EffectType.PotentialEnemies, 0, 1, 5),
                 new Effect(EffectType.PotentialEnemies, 0, 6, 5)
             };
-            facts[5] = new Dictionary<FactType, Fact> { { FactType.DangerFromUnknownSource, new Fact(FactType.DangerFromUnknownSource, 5, e) } };
+            facts[5] = new Dictionary<FactType, Fact> { { FactType.DangerFromUnknownSource, new Fact(FactType.DangerFromUnknownSource, 5, defaultTime, e) } };
 
             // Node 6 has LastKnownFriendlyPosition with value 2, and causes no Effects
             e = new List<Effect> { };
-            facts[6] = new Dictionary<FactType, Fact> { { FactType.LastKnownFriendlyPosition, new Fact(FactType.LastKnownFriendlyPosition, 2, e) } };
+            facts[6] = new Dictionary<FactType, Fact> { { FactType.LastKnownFriendlyPosition, new Fact(FactType.LastKnownFriendlyPosition, 2, defaultTime, e) } };
 
             // Node 7 has no facts.
             facts[7] = new Dictionary<FactType, Fact> { };
@@ -197,7 +198,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                 new Effect(EffectType.PotentialEnemies, 0, 6, 8),
                 new Effect(EffectType.PotentialEnemies, 0, 7, 8)
             };
-            facts[8] = new Dictionary<FactType, Fact> { { FactType.LastKnownEnemyPosition, new Fact(FactType.LastKnownEnemyPosition, 1, e) } };
+            facts[8] = new Dictionary<FactType, Fact> { { FactType.LastKnownEnemyPosition, new Fact(FactType.LastKnownEnemyPosition, 1, defaultTime, e) } };
 
             // Node 9 has no facts.
             facts[9] = new Dictionary<FactType, Fact> { };

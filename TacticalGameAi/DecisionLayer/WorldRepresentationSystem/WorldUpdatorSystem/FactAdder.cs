@@ -7,7 +7,7 @@ using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSystem {
     
     public interface IFactAdder {
-        void AddFact(WorldRepresentation world, int node, int value, Dictionary<FactType, Fact.MutableFact> nodeFacts);
+        void AddFact(WorldRepresentation world, int node, int value, int timeLearned, Dictionary<FactType, Fact.MutableFact> nodeFacts);
         void RemoveFact(WorldRepresentation world, int node, Dictionary<FactType, Fact.MutableFact> nodeFactsToModify);
     }
     
@@ -24,14 +24,15 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         }
 
         // Public Interface.
-        public void AddFact(WorldRepresentation world, int node, int value, Dictionary<FactType, Fact.MutableFact> nodeFacts) {
+        public void AddFact(WorldRepresentation world, int node, int value, int timeLearned, Dictionary<FactType, Fact.MutableFact> nodeFacts) {
             if (nodeFacts.ContainsKey(factType)) {
                 // Modify existing fact object's value, and that's it! The relevant effects should already exist, because the fact already exists.
                 nodeFacts[factType].SetValue(value);
+                nodeFacts[factType].SetTime(timeLearned);
             }
             else {
                 // New fact!
-                Fact.MutableFact f = new Fact.MutableFact(factType, value, new List<Effect>());
+                Fact.MutableFact f = new Fact.MutableFact(factType, value, timeLearned, new List<Effect>());
                 // Delegate Effect adding logic to all our IEffectAdder objects. We don't care!
                 foreach (IEffectAdder adder in effectAdders) {
                     adder.AddEffects(world, node, f);
