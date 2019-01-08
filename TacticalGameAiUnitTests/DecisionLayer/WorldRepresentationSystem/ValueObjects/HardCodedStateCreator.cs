@@ -187,6 +187,9 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             CollectionAssert.AreEquivalent(new int[] { 5, 6 }, set.GetPotentialEnemiesNodes());
             CollectionAssert.AreEquivalent(new int[] { 3, 0, 4 }, set.GetControlledByTeamNodes());
             CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetControlledByEnemiesNodes());
+            CollectionAssert.AreEquivalent(new int[] { 1, 3, 5, 6, 7 }, set.GetNoKnownPresenceNodes());
+            CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetEnemyPresenceNodes());
+            CollectionAssert.AreEquivalent(new int[] { }, set.GetDangerNodes());
         }
 
         public static void CheckTestDynamicState(DynamicState toTest) {

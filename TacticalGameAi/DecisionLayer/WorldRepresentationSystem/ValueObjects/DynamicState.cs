@@ -70,7 +70,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                     }
                 }
             }
-            nodeSetQueryObject = new NodeSetQuery(nodesWithFactsPresent, nodesWithEffectsPresent, KnownFriendlyPresenceReader(), KnownEnemyPresenceReader(), KnownDangerLevelReader(), HasDangerFromUnknownSourceReader(), HasNoKnownPresenceReader(), IsFriendlyAreaReader(), IsEnemyAreaReader(), IsContestedAreaReader(), IsClearReader(), IsControlledByTeamReader(), IsControlledByEnemiesReader(), VisibleToEnemiesReader(), PotentialEnemiesReader(), VisibleToFriendliesReader(), LastKnownEnemyPositionReader(), LastKnownFriendlyPositionReader());
+            nodeSetQueryObject = new NodeSetQuery(facts.Length, nodesWithFactsPresent, nodesWithEffectsPresent, KnownFriendlyPresenceReader(), KnownEnemyPresenceReader(), KnownDangerLevelReader(), HasDangerFromUnknownSourceReader(), HasNoKnownPresenceReader(), IsFriendlyAreaReader(), IsEnemyAreaReader(), IsContestedAreaReader(), IsClearReader(), IsControlledByTeamReader(), IsControlledByEnemiesReader(), VisibleToEnemiesReader(), PotentialEnemiesReader(), VisibleToFriendliesReader(), LastKnownEnemyPositionReader(), LastKnownFriendlyPositionReader());
         }
         private void AddEffectToEffectSum(int node, Effect e) {
             if (areaEffectSums[node].ContainsKey(e.EffectType)) {
@@ -226,11 +226,13 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private Dictionary<FactType, HashSet<int>> nodesWithFactsPresent;       // Tracks which nodes have which facts present, for faster 'reverse' querying.
             private Dictionary<EffectType, HashSet<int>> nodesWithEffectsPresent;   // Tracks which nodes have which effects present, for faster 'reverse' querying.
 
+            private int numNodes;
+
             private Func<int, int> friendlyPresenceReader;
             private Func<int, int> enemyPresenceReader;
             private Func<int, int> dangerLevelReader;
             private Func<int, bool> hasDangerFromUnknownSourceReader;
-            private Func<int, bool> unknownPresenceReader;
+            private Func<int, bool> noKnownPresenceReader;
             private Func<int, bool> isFriendlyAreaReader;
             private Func<int, bool> isEnemyAreaReader;
             private Func<int, bool> isContestedAreaReader;
@@ -244,14 +246,15 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private Func<int, int> lastKnownEnemyPositionReader;
             private Func<int, int> lastKnownFriendlyPositionReader;
 
-            public NodeSetQuery(Dictionary<FactType, HashSet<int>> nodesWithFactsPresent, Dictionary<EffectType, HashSet<int>> nodesWithEffectsPresent, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> unknownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader, Func<int, bool> visibleToFriendliesReader, Func<int, int> lastKnownEnemyPositionReader, Func<int, int> lastKnownFriendlyPositionReader) {
+            public NodeSetQuery(int numNodes, Dictionary<FactType, HashSet<int>> nodesWithFactsPresent, Dictionary<EffectType, HashSet<int>> nodesWithEffectsPresent, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> noKnownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader, Func<int, bool> visibleToFriendliesReader, Func<int, int> lastKnownEnemyPositionReader, Func<int, int> lastKnownFriendlyPositionReader) {
+                this.numNodes = numNodes;
                 this.nodesWithFactsPresent = nodesWithFactsPresent;
                 this.nodesWithEffectsPresent = nodesWithEffectsPresent;
                 this.friendlyPresenceReader = friendlyPresenceReader;
                 this.enemyPresenceReader = enemyPresenceReader;
                 this.dangerLevelReader = dangerLevelReader;
                 this.hasDangerFromUnknownSourceReader = hasDangerFromUnknownSourceReader;
-                this.unknownPresenceReader = unknownPresenceReader;
+                this.noKnownPresenceReader = noKnownPresenceReader;
                 this.isFriendlyAreaReader = isFriendlyAreaReader;
                 this.isEnemyAreaReader = isEnemyAreaReader;
                 this.isContestedAreaReader = isContestedAreaReader;
@@ -287,8 +290,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public IEnumerable<int> GetDangerFromUnknownSourceNodes() {
                 return FactBasedConditionLoop(hasDangerFromUnknownSourceReader, FactType.DangerFromUnknownSource);
             }
-            public IEnumerable<int> GetUnknownPresenceNodes() {
-                return FactBasedConditionLoop(unknownPresenceReader, FactType.FriendlyPresence, FactType.EnemyPresence);
+            public IEnumerable<int> GetNoKnownPresenceNodes() {
+                return CheckAllNodesLoop(noKnownPresenceReader);
             }
             public IEnumerable<int> GetFriendlyAreaNodes() {
                 return FactBasedConditionLoop(isFriendlyAreaReader, FactType.FriendlyPresence);
@@ -315,6 +318,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 return EffectBasedConditionLoop(potentialEnemiesReader, EffectType.PotentialEnemies);
             }
 
+            private IEnumerable<int> CheckAllNodesLoop(Func<int, bool> condition) {
+                for (int i=0; i < this.numNodes; i++) {
+                    if (condition(i)) yield return i;
+                }
+            }
             private IEnumerable<int> FactBasedConditionLoop(Func<int, bool> condition, params FactType[] ts) {
                 HashSet<int> candidates;
                 if (ts.Length == 1) candidates = nodesWithFactsPresent[ts[0]];
@@ -361,7 +369,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private int? enemyPresence;
             private int? dangerLevel;
             private bool? hasDangerFromUnknownSource;
-            private bool? unknownPresence;
+            private bool? noKnownPresence;
             private bool? isFriendlyArea;
             private bool? isEnemyArea;
             private bool? isContestedArea;
@@ -379,7 +387,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private Func<int, int> enemyPresenceReader;
             private Func<int, int> dangerLevelReader;
             private Func<int, bool> hasDangerFromUnknownSourceReader;
-            private Func<int, bool> unknownPresenceReader;
+            private Func<int, bool> noKnownPresenceReader;
             private Func<int, bool> isFriendlyAreaReader;
             private Func<int, bool> isEnemyAreaReader;
             private Func<int, bool> isContestedAreaReader;
@@ -435,10 +443,10 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                     return hasDangerFromUnknownSource.Value;
                 }
             }
-            public bool UnknownPresence {
+            public bool NoKnownPresence {
                 get {
-                    if (unknownPresence == null) { unknownPresence = unknownPresenceReader(NodeId); }
-                    return unknownPresence.Value;
+                    if (noKnownPresence == null) { noKnownPresence = noKnownPresenceReader(NodeId); }
+                    return noKnownPresence.Value;
                 }
             }
             public bool IsFriendlyArea {
@@ -491,13 +499,13 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             }
             
             // Constructor with horrificly long paramter list, but it's fine coz it's only used in one location.
-            internal AreaNode(int nodeId, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> unknownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader, Func<int, bool> visibleToFriendliesReader, Func<int, int> lastKnownEnemyPositionReader, Func<int, int> lastKnownFriendlyPositionReader) {
+            internal AreaNode(int nodeId, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> noKnownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader, Func<int, bool> visibleToFriendliesReader, Func<int, int> lastKnownEnemyPositionReader, Func<int, int> lastKnownFriendlyPositionReader) {
                 NodeId = nodeId;
                 this.friendlyPresenceReader = friendlyPresenceReader;
                 this.enemyPresenceReader = enemyPresenceReader;
                 this.dangerLevelReader = dangerLevelReader;
                 this.hasDangerFromUnknownSourceReader = hasDangerFromUnknownSourceReader;
-                this.unknownPresenceReader = unknownPresenceReader;
+                this.noKnownPresenceReader = noKnownPresenceReader;
                 this.isFriendlyAreaReader = isFriendlyAreaReader;
                 this.isEnemyAreaReader = isEnemyAreaReader;
                 this.isContestedAreaReader = isContestedAreaReader;
