@@ -27,11 +27,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
         // Public Interface - Directly get all Vertex and Edge data
         public AreaNode GetNodeData(int nodeId) {
-            if (areaNodes[nodeId] == null) areaNodes[nodeId] = new AreaNode(nodeId, KnownFriendlyPresenceReader(), KnownEnemyPresenceReader(), KnownDangerLevelReader(), HasDangerFromUnknownSourceReader(), HasNoKnownPresenceReader(), IsFriendlyAreaReader(), IsEnemyAreaReader(), IsContestedAreaReader(), IsClearReader(), IsControlledByTeamReader(), IsControlledByEnemiesReader(), VisibleToEnemiesReader(), PotentialEnemiesReader());
+            if (areaNodes[nodeId] == null) areaNodes[nodeId] = new AreaNode(nodeId, KnownFriendlyPresenceReader(), KnownEnemyPresenceReader(), KnownDangerLevelReader(), HasDangerFromUnknownSourceReader(), HasNoKnownPresenceReader(), IsFriendlyAreaReader(), IsEnemyAreaReader(), IsContestedAreaReader(), IsClearReader(), IsControlledByTeamReader(), IsControlledByEnemiesReader(), VisibleToEnemiesReader(), PotentialEnemiesReader(), VisibleToFriendliesReader(), LastKnownEnemyPositionReader(), LastKnownFriendlyPositionReader());
             return areaNodes[nodeId];
         }
         public AreaEdge GetEdge(int fromNode, int toNode) {
-            if (areaEdges[fromNode, toNode] == null) areaEdges[fromNode, toNode] = new AreaEdge(fromNode, toNode, CausingClearEffectReader(), CausingControlledByTeamEffectReader(), CausingControlledByEnemiesEffectReader(), CausingVisibleToEnemiesEffectReader(), CausingPotentialEnemiesEffectReader());
+            if (areaEdges[fromNode, toNode] == null) areaEdges[fromNode, toNode] = new AreaEdge(fromNode, toNode, CausingClearEffectReader(), CausingControlledByTeamEffectReader(), CausingControlledByEnemiesEffectReader(), CausingVisibleToEnemiesEffectReader(), CausingPotentialEnemiesEffectReader(), CausingVisibleToFriendliesEffectReader());
             return areaEdges[fromNode, toNode];
         }
         public NodeSetQuery NodeSetQueryObject { get { return nodeSetQueryObject; } }
@@ -70,7 +70,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                     }
                 }
             }
-            nodeSetQueryObject = new NodeSetQuery(nodesWithFactsPresent, nodesWithEffectsPresent, KnownFriendlyPresenceReader(), KnownEnemyPresenceReader(), KnownDangerLevelReader(), HasDangerFromUnknownSourceReader(), HasNoKnownPresenceReader(), IsFriendlyAreaReader(), IsEnemyAreaReader(), IsContestedAreaReader(), IsClearReader(), IsControlledByTeamReader(), IsControlledByEnemiesReader(), VisibleToEnemiesReader(), PotentialEnemiesReader());
+            nodeSetQueryObject = new NodeSetQuery(nodesWithFactsPresent, nodesWithEffectsPresent, KnownFriendlyPresenceReader(), KnownEnemyPresenceReader(), KnownDangerLevelReader(), HasDangerFromUnknownSourceReader(), HasNoKnownPresenceReader(), IsFriendlyAreaReader(), IsEnemyAreaReader(), IsContestedAreaReader(), IsClearReader(), IsControlledByTeamReader(), IsControlledByEnemiesReader(), VisibleToEnemiesReader(), PotentialEnemiesReader(), VisibleToFriendliesReader(), LastKnownEnemyPositionReader(), LastKnownFriendlyPositionReader());
         }
         private void AddEffectToEffectSum(int node, Effect e) {
             if (areaEffectSums[node].ContainsKey(e.EffectType)) {
@@ -150,7 +150,12 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         public Func<int, bool> IsContestedAreaReader() {
             return n => FactTruthReaderFunction(FactType.FriendlyPresence)(n) && FactTruthReaderFunction(FactType.EnemyPresence)(n);
         }
-
+        public Func<int, int> LastKnownEnemyPositionReader() {
+            return FactValueReaderFunction(FactType.LastKnownEnemyPosition);
+        }
+        public Func<int, int> LastKnownFriendlyPositionReader() {
+            return FactValueReaderFunction(FactType.LastKnownFriendlyPosition);
+        }
         // Public Interface - Clients can request reader function to read a subset of the graph. This describes the Effect reader function, which require preclusion table lookups.
         private Func<int, bool> EffectTruthReaderFunction(EffectType type) {
             return n => {
@@ -185,6 +190,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         public Func<int, bool> IsControlledByEnemiesReader() {
             return EffectTruthReaderFunction(EffectType.ControlledByEnemy);
         }
+        public Func<int, bool> VisibleToFriendliesReader() {
+            return EffectTruthReaderFunction(EffectType.VisibleToFriendlies);
+        }
 
         private Func<int, int, bool> EdgeDataReaderFunction(EffectType type) {
             return (from, to) => {
@@ -210,6 +218,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         public Func<int, int, bool> CausingPotentialEnemiesEffectReader() {
             return EdgeDataReaderFunction(EffectType.PotentialEnemies);
         }
+        public Func<int, int, bool> CausingVisibleToFriendliesEffectReader() {
+            return EdgeDataReaderFunction(EffectType.VisibleToFriendlies);
+        }
         
         public class NodeSetQuery {
             private Dictionary<FactType, HashSet<int>> nodesWithFactsPresent;       // Tracks which nodes have which facts present, for faster 'reverse' querying.
@@ -229,7 +240,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private Func<int, bool> visibleToEnemiesReader;
             private Func<int, bool> potentialEnemiesReader;
 
-            public NodeSetQuery(Dictionary<FactType, HashSet<int>> nodesWithFactsPresent, Dictionary<EffectType, HashSet<int>> nodesWithEffectsPresent, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> unknownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader) {
+            private Func<int, bool> visibleToFriendliesReader;
+            private Func<int, int> lastKnownEnemyPositionReader;
+            private Func<int, int> lastKnownFriendlyPositionReader;
+
+            public NodeSetQuery(Dictionary<FactType, HashSet<int>> nodesWithFactsPresent, Dictionary<EffectType, HashSet<int>> nodesWithEffectsPresent, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> unknownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader, Func<int, bool> visibleToFriendliesReader, Func<int, int> lastKnownEnemyPositionReader, Func<int, int> lastKnownFriendlyPositionReader) {
                 this.nodesWithFactsPresent = nodesWithFactsPresent;
                 this.nodesWithEffectsPresent = nodesWithEffectsPresent;
                 this.friendlyPresenceReader = friendlyPresenceReader;
@@ -245,8 +260,21 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 this.isControlledByEnemiesReader = isControlledByEnemiesReader;
                 this.visibleToEnemiesReader = visibleToEnemiesReader;
                 this.potentialEnemiesReader = potentialEnemiesReader;
+
+                this.visibleToFriendliesReader = visibleToFriendliesReader;
+                this.lastKnownEnemyPositionReader = lastKnownEnemyPositionReader;
+                this.lastKnownFriendlyPositionReader = lastKnownFriendlyPositionReader;
             }
 
+            public IEnumerable<int> GetVisibleToFriendliesNodes() {
+                return EffectBasedConditionLoop(visibleToFriendliesReader, EffectType.VisibleToFriendlies);
+            }
+            public IEnumerable<int> GetLastKnownEnemyPositionNodes() {
+                return FactBasedConditionLoop(n => lastKnownEnemyPositionReader(n) > 0, FactType.LastKnownEnemyPosition);
+            }
+            public IEnumerable<int> GetLastKnownFriendlyPositionNodes() {
+                return FactBasedConditionLoop(n => lastKnownFriendlyPositionReader(n) > 0, FactType.LastKnownFriendlyPosition);
+            }
             public IEnumerable<int> GetFriendlyPresenceNodes() {
                 return FactBasedConditionLoop(n => friendlyPresenceReader(n) > 0, FactType.FriendlyPresence);
             }
@@ -342,6 +370,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private bool? isControlledByEnemies;
             private bool? visibleToEnemies;
             private bool? potentialEnemies;
+            private bool? visibleToFriendlies;
+            private int? lastKnownEnemyPosition;
+            private int? lastKnownFriendlyPosition;
 
             // Lookup functions, used to lookup data values if they have not been cached yet.
             private Func<int, int> friendlyPresenceReader;
@@ -357,8 +388,29 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private Func<int, bool> isControlledByEnemiesReader;
             private Func<int, bool> visibleToEnemiesReader;
             private Func<int, bool> potentialEnemiesReader;
+            private Func<int, bool> visibleToFriendliesReader;
+            private Func<int, int> lastKnownEnemyPositionReader;
+            private Func<int, int> lastKnownFriendlyPositionReader;
 
             // Public Properties which clients will use to query data about this node!
+            public bool VisibleToFriendlies {
+                get {
+                    if (visibleToFriendlies == null) { visibleToFriendlies = visibleToFriendliesReader(NodeId); }
+                    return visibleToFriendlies.Value;
+                }
+            }
+            public int LastKnownEnemyPosition {
+                get {
+                    if (lastKnownEnemyPosition == null) { lastKnownEnemyPosition = lastKnownEnemyPositionReader(NodeId); }
+                    return lastKnownEnemyPosition.Value;
+                }
+            }
+            public int LastKnownFriendlyPosition {
+                get {
+                    if (lastKnownFriendlyPosition == null) { lastKnownFriendlyPosition = lastKnownFriendlyPositionReader(NodeId); }
+                    return lastKnownFriendlyPosition.Value;
+                }
+            }
             public int FriendlyPresence {
                 get {
                     if (friendlyPresence == null) { friendlyPresence = friendlyPresenceReader(NodeId); }
@@ -437,9 +489,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                     return potentialEnemies.Value;
                 }
             }
-
+            
             // Constructor with horrificly long paramter list, but it's fine coz it's only used in one location.
-            internal AreaNode(int nodeId, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> unknownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader) {
+            internal AreaNode(int nodeId, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> unknownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader, Func<int, bool> visibleToFriendliesReader, Func<int, int> lastKnownEnemyPositionReader, Func<int, int> lastKnownFriendlyPositionReader) {
                 NodeId = nodeId;
                 this.friendlyPresenceReader = friendlyPresenceReader;
                 this.enemyPresenceReader = enemyPresenceReader;
@@ -454,8 +506,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 this.isControlledByEnemiesReader = isControlledByEnemiesReader;
                 this.visibleToEnemiesReader = visibleToEnemiesReader;
                 this.potentialEnemiesReader = potentialEnemiesReader;
+                this.visibleToFriendliesReader = visibleToFriendliesReader;
+                this.lastKnownEnemyPositionReader = lastKnownEnemyPositionReader;
+                this.lastKnownFriendlyPositionReader = lastKnownFriendlyPositionReader;
 
-                // All cached values should be automatically initialised to null, since they are fields.
+                // All cached value fields will initialise to Null, since they are nullable fields.
             }
         }
 
@@ -471,13 +526,21 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private bool? isCausingControlledByEnemiesEffect;
             private bool? isCausingVisibleToEnemiesEffect;
             private bool? isCausingPotentialEnemiesEffect;
+            private bool? isCausingVisibleToFriendliesEffect;
 
             private Func<int, int, bool> causingClearEffectReader;
             private Func<int, int, bool> causingControlledByTeamEffectReader;
             private Func<int, int, bool> causingControlledByEnemiesEffectReader;
             private Func<int, int, bool> causingVisibleToEnemiesEffectReader;
             private Func<int, int, bool> causingPotentialEnemiesEffectReader;
+            private Func<int, int, bool> causingVisibleToFriendliesEffectReader;
 
+            public bool IsCausingVisibleToFriendliesEffect {
+                get {
+                    if (isCausingVisibleToFriendliesEffect == null) isCausingVisibleToFriendliesEffect = causingVisibleToFriendliesEffectReader(FromNodeId, ToNodeId);
+                    return isCausingVisibleToFriendliesEffect.Value;
+                }
+            }
             public bool IsCausingClearEffect {
                 get {
                     if (isCausingClearEffect == null) isCausingClearEffect = causingClearEffectReader(FromNodeId, ToNodeId);
@@ -509,7 +572,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 }
             }
 
-            internal AreaEdge(int fromNodeId, int toNodeId, Func<int, int, bool> causingClearEffectReader, Func<int, int, bool> causingControlledByTeamEffectReader, Func<int, int, bool> causingControlledByEnemiesEffectReader, Func<int, int, bool> causingVisibleToEnemiesEffectReader, Func<int, int, bool> causingPotentialEnemiesEffectReader) {
+            internal AreaEdge(int fromNodeId, int toNodeId, Func<int, int, bool> causingClearEffectReader, Func<int, int, bool> causingControlledByTeamEffectReader, Func<int, int, bool> causingControlledByEnemiesEffectReader, Func<int, int, bool> causingVisibleToEnemiesEffectReader, Func<int, int, bool> causingPotentialEnemiesEffectReader, Func<int, int, bool> causingVisibleToFriendliesEffectReader) {
                 FromNodeId = fromNodeId;
                 ToNodeId = toNodeId;
                 this.causingClearEffectReader = causingClearEffectReader;
@@ -517,6 +580,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 this.causingControlledByEnemiesEffectReader = causingControlledByEnemiesEffectReader;
                 this.causingVisibleToEnemiesEffectReader = causingVisibleToEnemiesEffectReader;
                 this.causingPotentialEnemiesEffectReader = causingPotentialEnemiesEffectReader;
+                this.causingVisibleToFriendliesEffectReader = causingVisibleToFriendliesEffectReader;
             }
         }
     }
