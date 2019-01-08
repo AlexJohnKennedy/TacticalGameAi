@@ -47,7 +47,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         }
         private Dictionary<int, Dictionary<FactType, Fact>> GenerateFactChangeData() {
             // --- CHANGES ---
-            // Node zero contains any friendlies. (Fact removal)
+            // Node zero no longer contains any friendlies. (Fact removal)
             // Node seven contains Danger
             Dictionary<int, Dictionary<FactType, Fact>> changes = new Dictionary<int, Dictionary<FactType, Fact>>();
 
@@ -98,7 +98,15 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetNodeData(7).FriendlyPresence == 0);
             Assert.IsTrue(toTest.GetNodeData(7).DangerLevel == 4);          // Testing the new Danger fact on node seven!
 
+            Assert.IsTrue(!toTest.GetNodeData(0).VisibleToFriendlies);
+            Assert.IsTrue(!toTest.GetNodeData(1).VisibleToFriendlies);
+            Assert.IsTrue(toTest.GetNodeData(3).VisibleToFriendlies);
+            Assert.IsTrue(toTest.GetNodeData(4).VisibleToFriendlies);
+            Assert.IsTrue(!toTest.GetNodeData(2).VisibleToFriendlies);
+
             // Do the same tests but using the graph-subset reader functions
+            Func<int, bool> visf = toTest.VisibleToFriendliesReader();
+            Assert.IsTrue(!visf(0) && !visf(1) && visf(3) && visf(4) && !visf(5) && !visf(6) && !visf(7) && !visf(2));
             Func<int, int> friends = toTest.KnownFriendlyPresenceReader();
             Assert.IsTrue(friends(0) == 0);                                 // Should be changed! (Compared to the original)
             Assert.IsTrue(friends(1) == 0);

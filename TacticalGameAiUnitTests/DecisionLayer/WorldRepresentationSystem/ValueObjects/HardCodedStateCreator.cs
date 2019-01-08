@@ -133,10 +133,12 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             var facts = new Dictionary<FactType, Fact>[8];
 
             // Set up the effects that each fact is causing.
-            // Node 0 causes 'clear' on node 1 and 3, and 'control' on 3
+            // Node 0 causes 'clear' / 'visibleToFriendlies' on node 1 and 3, and 'control' on 3
             List<Effect> e = new List<Effect> {
                 new Effect(EffectType.Clear, 0 ,1, 0),
                 new Effect(EffectType.Clear, 0, 3, 0),
+                new Effect(EffectType.VisibleToFriendlies, 0 ,1, 0),
+                new Effect(EffectType.VisibleToFriendlies, 0, 3, 0),
                 new Effect(EffectType.Controlled, 0, 3, 0)
             };
             facts[0] = new Dictionary<FactType, Fact> { { FactType.FriendlyPresence, new Fact(FactType.FriendlyPresence, 2, e) } };
@@ -154,9 +156,10 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             // Node 3 has no facts
             facts[3] = new Dictionary<FactType, Fact> { };
 
-            // Node 4 causes 'clear' on node 3
+            // Node 4 causes 'clear' on node 3, and visibleToFriendlies on node 3
             e = new List<Effect> {
                 new Effect(EffectType.Clear, 0, 3, 4),
+                new Effect(EffectType.VisibleToFriendlies, 0, 3, 4),
             };
             facts[4] = new Dictionary<FactType, Fact> { { FactType.FriendlyPresence, new Fact(FactType.FriendlyPresence, 1, e) } };
 
@@ -225,8 +228,21 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(!toTest.GetNodeData(7).IsControlledByTeam);
             Assert.IsTrue(toTest.GetNodeData(7).EnemyPresence == 0);
             Assert.IsTrue(toTest.GetNodeData(7).FriendlyPresence == 0);
+            Assert.IsTrue(toTest.GetNodeData(1).NoKnownPresence);
+            Assert.IsTrue(toTest.GetNodeData(3).NoKnownPresence);
+            Assert.IsTrue(toTest.GetNodeData(7).NoKnownPresence);
+            Assert.IsTrue(!toTest.GetNodeData(0).NoKnownPresence);
+
+            Assert.IsTrue(toTest.GetNodeData(0).VisibleToFriendlies);
+            Assert.IsTrue(toTest.GetNodeData(1).VisibleToFriendlies);
+            Assert.IsTrue(toTest.GetNodeData(3).VisibleToFriendlies);
+            Assert.IsTrue(toTest.GetNodeData(4).VisibleToFriendlies);
+            Assert.IsTrue(!toTest.GetNodeData(2).VisibleToFriendlies);
 
             // Do the same tests but using the graph-subset reader functions
+            Func<int, bool> visf = toTest.VisibleToFriendliesReader();
+            Assert.IsTrue(visf(0) && visf(1) && visf(3) && visf(4) && !visf(5) && !visf(6) && !visf(7) && !visf(2)); 
+
             Func<int, int> friends = toTest.KnownFriendlyPresenceReader();
             Assert.IsTrue(friends(0) == 2);
             Assert.IsTrue(friends(1) == 0);
@@ -239,6 +255,8 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(potentials(6) && !potentials(1) && !potentials(7) && !potentials(7) && potentials(5));
             Func<int, bool> vis = toTest.VisibleToEnemiesReader();
             Assert.IsTrue(vis(1) && vis(2) && !vis(3) && !vis(0) && !vis(7));
+            Func<int, bool> noPres = toTest.HasNoKnownPresenceReader();
+            Assert.IsTrue(noPres(7) && noPres(5) && !noPres(2));
 
             // Test edges
             Func<int, int, bool> clearing = toTest.CausingClearEffectReader();
