@@ -29,20 +29,13 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
         [Test]
         public void WorldUpdator_ApplyDynamicWorldChange_SuccessfullyCallsCorrectAdderLogic() {
             // Mock some fake FactAdders, and associate them with facttypes in order to build a WorldUpdator. These need not have any effect adders in them...
-            Mock<IFactAdder> friendlyAdder = new Mock<IFactAdder>();
-            Mock<IFactAdder> enemyAdder = new Mock<IFactAdder>();
-            Mock<IFactAdder> dangerAdder = new Mock<IFactAdder>();
-            Mock<IFactAdder> unknownDangerAdder = new Mock<IFactAdder>();
-            Mock<IFactAdder> lastKnownFriendlyAdder = new Mock<IFactAdder>();
-            Mock<IFactAdder> lastKnownEnemyAdder = new Mock<IFactAdder>();
-            Dictionary<FactType, IFactAdder> dict = new Dictionary<FactType, IFactAdder> {
-                { FactType.FriendlyPresence,        friendlyAdder.Object       },
-                { FactType.EnemyPresence,           enemyAdder.Object          },
-                { FactType.Danger,                  dangerAdder.Object         },
-                { FactType.DangerFromUnknownSource, unknownDangerAdder.Object  },
-                { FactType.LastKnownEnemyPosition,  lastKnownEnemyAdder.Object },
-                { FactType.LastKnownFriendlyPosition, lastKnownFriendlyAdder.Object }
-            };
+            Dictionary<FactType, IFactAdder> dict = new Dictionary<FactType, IFactAdder>();
+            Dictionary<FactType, Mock<IFactAdder>> mocks = new Dictionary<FactType, Mock<IFactAdder>>();
+            foreach (FactType t in Enum.GetValues(typeof(FactType))) {
+                mocks.Add(t, new Mock<IFactAdder>());
+                dict.Add(t, mocks[t].Object);
+            }
+            
             WorldUpdator toTest = new WorldUpdator(dict);
 
             // Mock a fake 'DynamicStateChange' interface object, which represents the data it should attempt to change.
@@ -83,20 +76,19 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             // VERIFY that the correct removal and add calls were made on the correct factAdder objects. ----------------------------
 
             // Friendly Adder should have been called once for removal on node 4!
-            friendlyAdder.Verify(f => f.RemoveFact(fakeWorld, 4, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.FriendlyPresence].Verify(f => f.RemoveFact(fakeWorld, 4, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
 
             // Danger Adder should have been called once for node 4, and once for node 5, with the correct value levels!
-            dangerAdder.Verify(d => d.AddFact(fakeWorld, 4, 7, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
-            dangerAdder.Verify(d => d.AddFact(fakeWorld, 5, 2, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.Danger].Verify(d => d.AddFact(fakeWorld, 4, 7, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.Danger].Verify(d => d.AddFact(fakeWorld, 5, 2, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
 
             // Enemy Adder should have been called once on node 2 for adding.
-            enemyAdder.Verify(e => e.AddFact(fakeWorld, 2, 2, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.EnemyPresence].Verify(e => e.AddFact(fakeWorld, 2, 2, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
 
             // Other adders should not have been called.
-            unknownDangerAdder.VerifyNoOtherCalls();
-            friendlyAdder.VerifyNoOtherCalls();
-            dangerAdder.VerifyNoOtherCalls();
-            enemyAdder.VerifyNoOtherCalls();
+            foreach(Mock<IFactAdder> m in mocks.Values) {
+                m.VerifyNoOtherCalls();
+            }
 
             Assert.IsTrue(fakeWorld != result);
         }
@@ -104,20 +96,13 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
         [Test]
         public void WorldUpdator_RevertDynamicWorldChange_SuccessfullyCallsCorrectAdderLogic() {
             // Mock some fake FactAdders, and associate them with facttypes in order to build a WorldUpdator. These need not have any effect adders in them...
-            Mock<IFactAdder> friendlyAdder = new Mock<IFactAdder>();
-            Mock<IFactAdder> enemyAdder = new Mock<IFactAdder>();
-            Mock<IFactAdder> dangerAdder = new Mock<IFactAdder>();
-            Mock<IFactAdder> unknownDangerAdder = new Mock<IFactAdder>();
-            Mock<IFactAdder> lastKnownFriendlyAdder = new Mock<IFactAdder>();
-            Mock<IFactAdder> lastKnownEnemyAdder = new Mock<IFactAdder>();
-            Dictionary<FactType, IFactAdder> dict = new Dictionary<FactType, IFactAdder> {
-                { FactType.FriendlyPresence,        friendlyAdder.Object       },
-                { FactType.EnemyPresence,           enemyAdder.Object          },
-                { FactType.Danger,                  dangerAdder.Object         },
-                { FactType.DangerFromUnknownSource, unknownDangerAdder.Object  },
-                { FactType.LastKnownEnemyPosition,  lastKnownEnemyAdder.Object },
-                { FactType.LastKnownFriendlyPosition, lastKnownFriendlyAdder.Object }
-            };
+            Dictionary<FactType, IFactAdder> dict = new Dictionary<FactType, IFactAdder>();
+            Dictionary<FactType, Mock<IFactAdder>> mocks = new Dictionary<FactType, Mock<IFactAdder>>();
+            foreach (FactType t in Enum.GetValues(typeof(FactType))) {
+                mocks.Add(t, new Mock<IFactAdder>());
+                dict.Add(t, mocks[t].Object);
+            }
+
             WorldUpdator toTest = new WorldUpdator(dict);
 
             // Mock a fake 'DynamicStateChange' interface object, which represents the data it should attempt to change.
@@ -158,20 +143,19 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             // VERIFY that the correct removal and add calls were made on the correct factAdder objects. ----------------------------
 
             // Friendly Adder should have been called once for addition on node 4 with a value of 1 (the 'before' fact)
-            friendlyAdder.Verify(f => f.AddFact(fakeWorld, 4, 1, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.FriendlyPresence].Verify(f => f.AddFact(fakeWorld, 4, 1, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
 
             // Danger Adder should have called 'remove' once for node 4, and once for node 5.
-            dangerAdder.Verify(d => d.RemoveFact(fakeWorld, 4, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
-            dangerAdder.Verify(d => d.RemoveFact(fakeWorld, 5, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.Danger].Verify(d => d.RemoveFact(fakeWorld, 4, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.Danger].Verify(d => d.RemoveFact(fakeWorld, 5, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
 
             // Enemy Adder should have been called once on node 2 for adding.
-            enemyAdder.Verify(e => e.RemoveFact(fakeWorld, 2, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.EnemyPresence].Verify(e => e.RemoveFact(fakeWorld, 2, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
 
             // Other adders should not have been called.
-            unknownDangerAdder.VerifyNoOtherCalls();
-            friendlyAdder.VerifyNoOtherCalls();
-            dangerAdder.VerifyNoOtherCalls();
-            enemyAdder.VerifyNoOtherCalls();
+            foreach (Mock<IFactAdder> m in mocks.Values) {
+                m.VerifyNoOtherCalls();
+            }
 
             Assert.IsTrue(fakeWorld != result);
         }
