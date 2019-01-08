@@ -160,5 +160,19 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                 Assert.DoesNotThrow(() => { Dictionary<EffectType, EffectSum> f = DynamicStateInternalReader.GetNodeEffectSum(i, empty); });
             }
         }
+
+        [Test]
+        public void FactAndEffectRules_AllEnumValuesHaveAssociatedHashSet() {
+            foreach (FactType f in Enum.GetValues(typeof(FactType))) {
+                Assert.NotNull(FactAndEffectRules.GetEffectsIncludedByFact(f));
+                Assert.NotNull(FactAndEffectRules.GetEffectsPrecludedByFact(f));
+            }
+            foreach (EffectType e in Enum.GetValues(typeof(EffectType))) {
+                Assert.NotNull(FactAndEffectRules.EffectsWhichPreclude(e));
+                Assert.NotNull(FactAndEffectRules.FactsWhichInclude(e));
+                Assert.NotNull(FactAndEffectRules.FactsWhichPreclude(e));
+                Assert.NotNull(FactAndEffectRules.GetEffectsPrecludedByEffect(e));
+            }
+        }
     }
 }
