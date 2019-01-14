@@ -1,7 +1,6 @@
 ﻿using NUnit.Framework;
 using Moq;
 using System;
-using System.Reflection;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHiddenTypes;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSystem;
