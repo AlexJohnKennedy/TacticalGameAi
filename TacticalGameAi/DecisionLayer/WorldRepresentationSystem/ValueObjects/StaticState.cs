@@ -11,7 +11,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         static StaticState() {
             contactPointCalculator = new DefaultContactPointCalculator();
         }
-        
+
         // Data storage types for the static world state graph.
         public class AreaNode {
             public int NodeId { get; }
@@ -30,7 +30,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
             // A set of sets, where each inner set is a group of adjacent contact point nodes. Each group represents one 'angle' (in the Counter-Strike sense) that this area is exposed to.
             internal HashSet<HashSet<int>> contactPointGroups;  // Internal so that the staticState constructor can populate upon construction!
-            public HashSet<HashSet<int>> ContactPointGroups {
+            public IReadOnlyCollection<IReadOnlyCollection<int>> ContactPointGroups {
                 get { return contactPointGroups; }
             }
 
@@ -117,7 +117,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             attackObjectiveNodes = new HashSet<int>();
             defendObjectiveNodes = new HashSet<int>();
             enemyOriginPointNodes = new HashSet<int>();
-            for (int i=0; i < nodes.Length; i++) {
+            for (int i = 0; i < nodes.Length; i++) {
                 if (nodes[i].AttackObjective) attackObjectiveNodes.Add(i);
                 if (nodes[i].DefendObjective) defendObjectiveNodes.Add(i);
                 if (nodes[i].EnemyOriginPoint) enemyOriginPointNodes.Add(i);
@@ -141,9 +141,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             // For performance, this value is not checked.
             return areaEdges[fromNode, toNode];
         }
-        public HashSet<int> GetAttackObjectiveAreas() { return attackObjectiveNodes; }
-        public HashSet<int> GetDefendObjectiveAreas() { return defendObjectiveNodes; }
-        public HashSet<int> GetEnemyOriginPointAreas() { return enemyOriginPointNodes; }
+        public IReadOnlyCollection<int> GetAttackObjectiveAreas() { return attackObjectiveNodes; }
+        public IReadOnlyCollection<int> GetDefendObjectiveAreas() { return defendObjectiveNodes; }
+        public IReadOnlyCollection<int> GetEnemyOriginPointAreas() { return enemyOriginPointNodes; }
 
         // Public Interface - Get a function which gains access to a subset of the vertex data in the graph
         public Func<int, int> GeneralAreaReader() {
@@ -181,6 +181,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         }
         public Func<int, bool> IsEnemyOriginPointReader() {
             return node => areaNodes[node].EnemyOriginPoint;
+        }
+        public Func<int, IReadOnlyCollection<IReadOnlyCollection<int>>> ContactPointGroupsReader() {
+            return node => areaNodes[node].ContactPointGroups;
         }
 
         // Public Interface - Get a function which gains access to a subset of the edge data in the graph

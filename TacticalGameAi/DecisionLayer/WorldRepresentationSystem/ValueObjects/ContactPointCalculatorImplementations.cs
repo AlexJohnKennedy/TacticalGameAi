@@ -22,14 +22,15 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ContactPointCal
 
             // Find all Contact Nodes by just brute force dumb-assing it coz it's late
             HashSet<int> contactNodes = new HashSet<int>();
-            foreach(int n in visible) {
-                foreach(int connectedNode in s.GetConnectedNodes(n)) {
-                    if (!visible.Contains(connectedNode)) {
-                        contactNodes.Add(connectedNode);
+            foreach(int candidate in visible) {
+                foreach(int connectedNode in s.GetConnectedNodes(candidate)) {
+                    if (!visible.Contains(connectedNode) && connectedNode != node) {
+                        contactNodes.Add(candidate);
+                        break;
                     }
                 }
             }
-
+            
             // Now find all the disconnected sub-graphs, taking traversability as the edges for the graph.
             HashSet<int> visited = new HashSet<int>();
             foreach(int sourcePoint in contactNodes) {
