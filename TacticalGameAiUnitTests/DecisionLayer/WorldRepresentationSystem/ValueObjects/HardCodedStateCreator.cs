@@ -66,7 +66,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
         public static void CheckTestStaticState(StaticState s) {
             // Assert the overwatch locations
-            Func<int, bool> reader = s.IsOverwatchLocation();
+            Func<int, bool> reader = s.IsOverwatchLocationReader();
             for (int i = 0; i < numNodes; i++) {
                 // Should be overwatch locations
                 if (i == 2 || i == 5) {

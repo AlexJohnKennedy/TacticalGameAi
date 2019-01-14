@@ -17,8 +17,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public bool DeadEnd { get; }            // BOOL - Is this area a deadend? Will be true if there is only one 'exit' from the general area.
             public bool Junction { get; }           // BOOL - Is this area a junction point? Will be true if multiple paths converge at this point.
             public bool OverwatchLocation { get; }  // BOOL - Is this area somewhere which observes over a large number of different general areas?
+            public bool AttackObjective { get; }
+            public bool DefendObjective { get; }
+            public bool EnemyOriginPoint { get; }
 
-            public AreaNode(int nodeId, int generalAreaId, int coverLevel, int concealmentLevel, bool chokepoint, int tacticalValue, int exposureLevel, bool deadEnd, bool junction, bool overwatchLocation) {
+            public AreaNode(int nodeId, int generalAreaId, int coverLevel, int concealmentLevel, bool chokepoint, int tacticalValue, int exposureLevel, bool deadEnd, bool junction, bool overwatchLocation, bool attackObjective, bool defendObjective, bool enemyOriginPoint) {
                 NodeId = nodeId;
                 GeneralAreaId = generalAreaId;
                 CoverLevel = coverLevel;
@@ -29,10 +32,10 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 DeadEnd = deadEnd;
                 Junction = junction;
                 OverwatchLocation = overwatchLocation;
+                AttackObjective = attackObjective;
+                DefendObjective = defendObjective;
+                EnemyOriginPoint = enemyOriginPoint;
             }
-
-            // Private constructor, so that only the surrounding class can access it
-
         }
         public class AreaEdge {
             public int FromNodeId { get; }          // 'This' node (A)
@@ -74,7 +77,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         private AreaEdge[,] areaEdges;
         private int numNodes;
 
-        // TODO: 6 - Add Obstacle graph creation and storage. Obstacle graph is applied on top of base area data to modify return results, essentially acting as an additional 'filter'.
+        // Set based references for rarely true data fields, that are more useful to be looked up as sets since most of the time they won't apply to a given area node.
+        private HashSet<int> attackObjectiveNodes;
+        private HashSet<int> defendObjectiveNodes;
+        private HashSet<int> enemyOriginPointNodes;
+
         // TODO: 7 - Implement the ability to read a structured data file (JSON, XML) containing a WorldRepresentation configuration in order to build the StaticState/DynamicState. This will be essential for testing the system!
         public StaticState(AreaNode[] nodes, AreaEdge[,] edges) {
             areaNodes = nodes ?? throw new ArgumentNullException("nodes", "ERROR: Tried to create new StaticState but nodes array was null");
@@ -90,6 +97,16 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             // Setup 'opposite edge' relationships
             foreach (AreaEdge e in areaEdges) {
                 e.oppositeEdge = areaEdges[e.ToNodeId, e.FromNodeId];
+            }
+
+            // Setup the objective sets
+            attackObjectiveNodes = new HashSet<int>();
+            defendObjectiveNodes = new HashSet<int>();
+            enemyOriginPointNodes = new HashSet<int>();
+            for (int i=0; i < nodes.Length; i++) {
+                if (nodes[i].AttackObjective) attackObjectiveNodes.Add(i);
+                if (nodes[i].DefendObjective) defendObjectiveNodes.Add(i);
+                if (nodes[i].EnemyOriginPoint) enemyOriginPointNodes.Add(i);
             }
         }
 
@@ -109,6 +126,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             // For performance, this value is not checked.
             return areaEdges[fromNode, toNode];
         }
+        public HashSet<int> GetAttackObjectiveAreas() { return attackObjectiveNodes; }
+        public HashSet<int> GetDefendObjectiveAreas() { return defendObjectiveNodes; }
+        public HashSet<int> GetEnemyOriginPointAreas() { return enemyOriginPointNodes; }
 
         // Public Interface - Get a function which gains access to a subset of the vertex data in the graph
         public Func<int, int> GeneralAreaReader() {
@@ -135,8 +155,17 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         public Func<int, bool> IsJunctionReader() {
             return node => areaNodes[node].Junction;
         }
-        public Func<int, bool> IsOverwatchLocation() {
+        public Func<int, bool> IsOverwatchLocationReader() {
             return node => areaNodes[node].OverwatchLocation;
+        }
+        public Func<int, bool> IsAttackObjectiveReader() {
+            return node => areaNodes[node].AttackObjective;
+        }
+        public Func<int, bool> IsDefendObjectiveReader() {
+            return node => areaNodes[node].DefendObjective;
+        }
+        public Func<int, bool> IsEnemyOriginPointReader() {
+            return node => areaNodes[node].EnemyOriginPoint;
         }
 
         // Public Interface - Get a function which gains access to a subset of the edge data in the graph
