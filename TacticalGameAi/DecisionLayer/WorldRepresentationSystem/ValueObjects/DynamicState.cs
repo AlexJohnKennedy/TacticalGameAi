@@ -706,21 +706,24 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
     public class Fact {
         public FactType FactType { get; private set; }   // Identifies what kind of fact this is! The enum is not to be visible outside of the WorldRepresentation Module.
         public int Value { get; private set; }           // The 'magnitude' of the fact type, if applicable.
+        public int TimeLearned { get; private set; }     // Gametime Timestamp of when the unit learned about this fact.
         private List<Effect> effectsCaused;                  // A List of all the nodes which this fact is causing 'Effects' upon.
         public IReadOnlyCollection<Effect> EffectsCaused {
             get { return effectsCaused.AsReadOnly(); }
         }
-        public Fact(FactType factType, int value, List<Effect> effectsCaused) {
+        public Fact(FactType factType, int value, int timeLearned, List<Effect> effectsCaused) {
             FactType = factType;
             Value = value;
             this.effectsCaused = effectsCaused;
+            this.TimeLearned = timeLearned;
         }
 
         public sealed class MutableFact : Fact {
-            public MutableFact(FactType factType, int value, List<Effect> effects) : base(factType, value, effects) { }
-            public MutableFact(Fact toClone) : base(toClone.FactType, toClone.Value, CloneList(toClone.EffectsCaused)) { }
+            public MutableFact(FactType factType, int value, int timeLearned, List<Effect> effects) : base(factType, value, timeLearned, effects) { }
+            public MutableFact(Fact toClone) : base(toClone.FactType, toClone.Value, toClone.TimeLearned, CloneList(toClone.EffectsCaused)) { }
             // Mutators. Only to be used by builder classes, such as the world updator
             public void SetValue(int value) { Value = value; }
+            public void SetTime(int time) { TimeLearned = time; }
             public void SetFactType(FactType f) { FactType = f; }
             public List<Effect> AccessEffectsCausedList() { return effectsCaused; }
 

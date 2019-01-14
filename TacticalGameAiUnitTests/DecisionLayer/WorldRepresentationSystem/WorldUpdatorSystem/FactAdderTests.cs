@@ -15,8 +15,9 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             // Arrange
             int NODE = 3;
             int VALUE = 2;
+            int TIME = 125;
 
-            Fact.MutableFact existingFact = new Fact.MutableFact(FactType.EnemyPresence, 1, null);
+            Fact.MutableFact existingFact = new Fact.MutableFact(FactType.EnemyPresence, 1, TIME, null);
 
             WorldRepresentation fakeWorld = WorldRep_ValueObjectMocker.NewWorldRepresentationMock();
             Dictionary<FactType, Fact.MutableFact> toPopulate = new Dictionary<FactType, Fact.MutableFact> { { FactType.EnemyPresence, existingFact } };   // This should become populated by the fact adder!
@@ -24,7 +25,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             FactAdder toTest = new FactAdder(FactType.EnemyPresence, new IEffectAdder[] { });
 
             // ACT
-            toTest.AddFact(fakeWorld, NODE, VALUE, toPopulate);
+            toTest.AddFact(fakeWorld, NODE, VALUE, TIME, toPopulate);
 
             // ASSERT
             Assert.IsTrue(existingFact.Value == 2);    // Verify that the fact was mutated with the correct value.
@@ -41,16 +42,17 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             // and the correct World object (which also must be mocked).
             int NODE = 3;
             int VALUE = 2;
+            int TIME = 125;
             Mock<IEffectAdder> e1 = new Mock<IEffectAdder>();
             Mock<IEffectAdder> e2 = new Mock<IEffectAdder>();
-            Fact.MutableFact existingFact = new Fact.MutableFact(FactType.EnemyPresence, 1, null);
+            Fact.MutableFact existingFact = new Fact.MutableFact(FactType.EnemyPresence, 1, TIME, null);
             WorldRepresentation fakeWorld = WorldRep_ValueObjectMocker.NewWorldRepresentationMock();
             Dictionary<FactType, Fact.MutableFact> toPopulate = new Dictionary<FactType, Fact.MutableFact> { { FactType.EnemyPresence, existingFact } };   // This should become populated by the fact adder
 
             FactAdder toTest = new FactAdder(FactType.FriendlyPresence, new IEffectAdder[] { e1.Object, e2.Object });
 
             // ACT
-            toTest.AddFact(fakeWorld, NODE, VALUE, toPopulate);
+            toTest.AddFact(fakeWorld, NODE, VALUE, TIME, toPopulate);
 
             // ASSERT
             Assert.IsTrue(existingFact.Value == 1);    // Verify that the fact was not mutated.
@@ -78,9 +80,9 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
         public void FactAdder_RemoveFact_SuccessfullyRemovesFact() {
             // Arrange
             int NODE = 3;
-            
-            Fact.MutableFact existingFact  = new Fact.MutableFact(FactType.EnemyPresence, 1, null);
-            Fact.MutableFact existingFact2 = new Fact.MutableFact(FactType.Danger, 3, null);
+            int TIME = 125;
+            Fact.MutableFact existingFact  = new Fact.MutableFact(FactType.EnemyPresence, 1, TIME, null);
+            Fact.MutableFact existingFact2 = new Fact.MutableFact(FactType.Danger, 3, TIME, null);
             WorldRepresentation fakeWorld  = WorldRep_ValueObjectMocker.NewWorldRepresentationMock();
             Dictionary<FactType, Fact.MutableFact> toPopulate = new Dictionary<FactType, Fact.MutableFact> {
                 { FactType.EnemyPresence, existingFact },

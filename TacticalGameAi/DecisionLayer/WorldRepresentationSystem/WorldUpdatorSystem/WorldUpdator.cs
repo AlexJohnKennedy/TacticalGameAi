@@ -44,7 +44,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                 changeData.Add(n, nFactsMutableCopies);
             }
             Remove(eventData.GetFactsBefore(), changeData, world);
-            Add(eventData.GetFactsAfter(), changeData, world);
+            Add(eventData.GetFactsAfter(), changeData, eventData.TimeLearned, world);
 
             // TODO 5 - Make this LINQ dictionary 'cast' less retarded.
             Dictionary<int, Dictionary<FactType, Fact>> immutableCast = changeData.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToDictionary(kvp2 => kvp2.Key, kvp2 => (Fact)kvp2.Value));
@@ -63,7 +63,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             }
 
             Remove(eventData.GetFactsAfter(), changeData, world);
-            Add(eventData.GetFactsBefore(), changeData, world);
+            Add(eventData.GetFactsBefore(), changeData, eventData.TimeLearned, world);
 
             // TODO 5 - Make this LINQ dictionary 'cast' less retarded.
             Dictionary<int, Dictionary<FactType, Fact>> immutableCast = changeData.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToDictionary(kvp2 => kvp2.Key, kvp2 => (Fact)kvp2.Value));
@@ -82,7 +82,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                 }
             }
         }
-        private void Add(Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> factsToAdd, Dictionary<int, Dictionary<FactType, Fact.MutableFact>> nodeFactData, WorldRepresentation world) {
+        private void Add(Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> factsToAdd, Dictionary<int, Dictionary<FactType, Fact.MutableFact>> nodeFactData, int timeLearned, WorldRepresentation world) {
             // Cycle each node to have something removed
             foreach (var n in factsToAdd) {
                 // n.Key   == NodeId
@@ -90,7 +90,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                 foreach (var f in n.Value) {
                     // Use our mapped adder logic to add this fact!
                     FactType typeToBeAdded = f.Key;
-                    adderLogic[typeToBeAdded].AddFact(world, n.Key, f.Value, nodeFactData[n.Key]);
+                    adderLogic[typeToBeAdded].AddFact(world, n.Key, f.Value, timeLearned, nodeFactData[n.Key]);
                 }
             }
         }
@@ -105,6 +105,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> GetFactsAfter();      // Set of NEW facts and values to be added to each respective node.
         Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> GetFactsBefore();     // Set of OLD facts and values which are changed/removed by this change, for each respective ndoe.
         IEnumerable<int> AffectedNodes { get; }
+        int TimeLearned { get; }                                                        // A Timestamp in gametime which tells us when the a unit was made aware of these fact changes.
     }
 
 }
