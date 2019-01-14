@@ -1,9 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ContactPointCalculationSystem;
 using System.Text;
 
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
     public class StaticState {
+
+        // Logic object to define how contact point sets are calculated.
+        private static IContactPointCalculator contactPointCalculator;
+        static StaticState() {
+            contactPointCalculator = new DefaultContactPointCalculator();
+        }
         
         // Data storage types for the static world state graph.
         public class AreaNode {
@@ -21,6 +28,12 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public bool DefendObjective { get; }
             public bool EnemyOriginPoint { get; }
 
+            // A set of sets, where each inner set is a group of adjacent contact point nodes. Each group represents one 'angle' (in the Counter-Strike sense) that this area is exposed to.
+            internal HashSet<HashSet<int>> contactPointGroups;  // Internal so that the staticState constructor can populate upon construction!
+            public HashSet<HashSet<int>> ContactPointGroups {
+                get { return contactPointGroups; }
+            }
+
             public AreaNode(int nodeId, int generalAreaId, int coverLevel, int concealmentLevel, bool chokepoint, int tacticalValue, int exposureLevel, bool deadEnd, bool junction, bool overwatchLocation, bool attackObjective, bool defendObjective, bool enemyOriginPoint) {
                 NodeId = nodeId;
                 GeneralAreaId = generalAreaId;
@@ -35,6 +48,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 AttackObjective = attackObjective;
                 DefendObjective = defendObjective;
                 EnemyOriginPoint = enemyOriginPoint;
+                contactPointGroups = new HashSet<HashSet<int>>();
             }
         }
         public class AreaEdge {
@@ -99,7 +113,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 e.oppositeEdge = areaEdges[e.ToNodeId, e.FromNodeId];
             }
 
-            // Setup the objective sets
+            // Setup the objective sets and the contact points (expensive, but StaticState should never be fully rebuilt).
             attackObjectiveNodes = new HashSet<int>();
             defendObjectiveNodes = new HashSet<int>();
             enemyOriginPointNodes = new HashSet<int>();
@@ -107,6 +121,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 if (nodes[i].AttackObjective) attackObjectiveNodes.Add(i);
                 if (nodes[i].DefendObjective) defendObjectiveNodes.Add(i);
                 if (nodes[i].EnemyOriginPoint) enemyOriginPointNodes.Add(i);
+                areaNodes[i].contactPointGroups = contactPointCalculator.CalculateContactPointGroups(this, i);
             }
         }
 
@@ -190,6 +205,23 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         }
         public Func<int, int, float> MinimumHearableVolumeReader() {
             return (from, to) => areaEdges[from, to].MinimumHearableVolume;
+        }
+
+        // Public Interface - Query for sets based on an edge condition. This interface can later be refactored to use adjacency lists to avoid O(n) querying.
+        private HashSet<int> NodeQueryBasedOnEdgeCondition(int n, Func<int, bool> edgeCondition) {
+            HashSet<int> toRet = new HashSet<int>();
+            for (int i=0; i < areaNodes.Length; i++) {
+                if (edgeCondition(i) && i != n) {
+                    toRet.Add(i);
+                }
+            }
+            return toRet;
+        }
+        public HashSet<int> GetVisibleNodes(int node) {
+            return NodeQueryBasedOnEdgeCondition(node, n => areaEdges[node, n].CanSee);
+        }
+        public HashSet<int> GetConnectedNodes(int node) {
+            return NodeQueryBasedOnEdgeCondition(node, n => areaEdges[node, n].IsConnected);
         }
     }
 }
