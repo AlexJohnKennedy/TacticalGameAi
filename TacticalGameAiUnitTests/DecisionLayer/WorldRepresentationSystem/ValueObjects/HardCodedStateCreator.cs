@@ -1,7 +1,6 @@
 ﻿using NUnit.Framework;
 using Moq;
 using System;
-using System.Reflection;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHiddenTypes;
 using System.Collections.Generic;
@@ -17,16 +16,16 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
         private static StaticState.AreaNode[] PrepareNodeData() {
             StaticState.AreaNode[] toRet = new StaticState.AreaNode[numNodes];
-            toRet[0] = new StaticState.AreaNode(0, 0, 8, 3, false, 5, 5, false, false, false);
-            toRet[1] = new StaticState.AreaNode(1, 0, 0, 0, true, 1, 8, false, false, false);
-            toRet[2] = new StaticState.AreaNode(2, 1, 6, 1, false, 3, 3, false, false, true);
-            toRet[3] = new StaticState.AreaNode(3, 0, 0, 0, false, 1, 5, true, false, false);
-            toRet[4] = new StaticState.AreaNode(4, 0, 0, 5, false, 2, 1, true, false, false);
-            toRet[5] = new StaticState.AreaNode(5, 1, 3, 1, false, 6, 2, false, false, true);
-            toRet[6] = new StaticState.AreaNode(6, 1, 0, 0, true, 3, 5, false, true, false);
-            toRet[7] = new StaticState.AreaNode(7, 2, 0, 0, false, 1, 8, true, false, false);
-            toRet[8] = new StaticState.AreaNode(8, 2, 0, 0, false, 1, 8, true, false, false);
-            toRet[9] = new StaticState.AreaNode(9, 2, 0, 0, false, 1, 5, true, false, false);
+            toRet[0] = new StaticState.AreaNode(0, 0, 8, 3, false, 5, 5, false, false, false, false, false, false);
+            toRet[1] = new StaticState.AreaNode(1, 0, 0, 0, true, 1, 8, false, false, false, false, false, false);
+            toRet[2] = new StaticState.AreaNode(2, 1, 6, 1, false, 3, 3, false, false, true, false, false, false);
+            toRet[3] = new StaticState.AreaNode(3, 0, 0, 0, false, 1, 5, true, false, false, false, false, false);
+            toRet[4] = new StaticState.AreaNode(4, 0, 0, 5, false, 2, 1, true, false, false, false, true, false);
+            toRet[5] = new StaticState.AreaNode(5, 1, 3, 1, false, 6, 2, false, false, true, false, false, false);
+            toRet[6] = new StaticState.AreaNode(6, 1, 0, 0, true, 3, 5, false, true, false, false, false, true);
+            toRet[7] = new StaticState.AreaNode(7, 2, 0, 0, false, 1, 8, true, false, false, false, false, true);
+            toRet[8] = new StaticState.AreaNode(8, 2, 0, 0, false, 1, 8, true, false, false, true, false, false);
+            toRet[9] = new StaticState.AreaNode(9, 2, 0, 0, false, 1, 5, true, false, false, false, false, false);
 
             return toRet;
         }
@@ -65,18 +64,63 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         }
 
         public static void CheckTestStaticState(StaticState s) {
-            // Assert the overwatch locations
-            Func<int, bool> reader = s.IsOverwatchLocationReader();
+            // Assert node states
+            Func<int, bool> ow = s.IsOverwatchLocationReader();
+            Func<int, bool> attack = s.IsAttackObjectiveReader();
+            Func<int, bool> defend = s.IsDefendObjectiveReader();
+            Func<int, bool> origin = s.IsEnemyOriginPointReader();
+            Func<int, bool> junction = s.IsJunctionReader();
+            Func<int, bool> deadend = s.IsDeadEndReader();
+            Func<int, bool> chokepoint = s.IsChokepointReader();
             for (int i = 0; i < numNodes; i++) {
-                // Should be overwatch locations
+                // Overwatch locations
                 if (i == 2 || i == 5) {
-                    Assert.IsTrue(reader(i));
+                    Assert.IsTrue(ow(i));
                     Assert.IsTrue(s.GetNodeData(i).OverwatchLocation);
                 }
-                // Should NOT be overwatch locations
                 else {
-                    Assert.IsFalse(reader(i));
+                    Assert.IsFalse(ow(i));
                     Assert.IsFalse(s.GetNodeData(i).OverwatchLocation);
+                }
+
+                // Attack objectives
+                if (i == 8) {
+                    Assert.IsTrue(attack(i));
+                    Assert.IsTrue(s.GetNodeData(i).AttackObjective);
+                }
+                else {
+                    Assert.IsFalse(attack(i));
+                    Assert.IsFalse(s.GetNodeData(i).AttackObjective);
+                }
+
+                // Defend objectives
+                if (i == 4) {
+                    Assert.IsTrue(defend(i));
+                    Assert.IsTrue(s.GetNodeData(i).DefendObjective);
+                }
+                else {
+                    Assert.IsFalse(defend(i));
+                    Assert.IsFalse(s.GetNodeData(i).DefendObjective);
+                }
+
+                // Enemy Origin points
+                if (i == 6 || i == 7) {
+                    Assert.IsTrue(origin(i));
+                    Assert.IsTrue(s.GetNodeData(i).EnemyOriginPoint);
+                }
+                else {
+                    Assert.IsFalse(origin(i));
+                    Assert.IsFalse(s.GetNodeData(i).EnemyOriginPoint);
+                }
+
+                // Junction
+                if (i == 6) {
+                    Assert.IsTrue(junction(i));
+                    Assert.IsTrue(s.GetNodeData(i).Junction);
+                }
+                else {
+                    Assert.IsFalse(junction(i));
+                    Assert.IsFalse(s.GetNodeData(i).Junction);
                 }
             }
 

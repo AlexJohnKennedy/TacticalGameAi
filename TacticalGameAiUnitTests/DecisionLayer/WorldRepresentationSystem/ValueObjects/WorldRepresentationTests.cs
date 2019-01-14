@@ -11,7 +11,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             var n = new StaticState.AreaNode[100];
             var e = new StaticState.AreaEdge[100, 100];
             for (int i=0; i<100; i++) {
-                n[i] = new StaticState.AreaNode(i, i, 0, 0, false, 0, 0, false, false, false);
+                n[i] = new StaticState.AreaNode(i, i, 0, 0, false, 0, 0, false, false, false, false, false, false);
                 for (int j=0; j<100; j++) {
                     e[i, j] = new StaticState.AreaEdge(i, j, false, false, 0, 0, 0, 0, false);
                 }
