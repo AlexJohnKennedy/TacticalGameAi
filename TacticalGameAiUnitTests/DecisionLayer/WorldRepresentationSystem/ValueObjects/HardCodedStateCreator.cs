@@ -33,32 +33,33 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             StaticState.AreaEdge[,] toRet = new StaticState.AreaEdge[numNodes, numNodes];
             for (int i = 0; i < numNodes; i++) {
                 for (int j = 0; j < numNodes; j++) {
-                    toRet[i, j] = new StaticState.AreaEdge(i, j, false, false, 0, 0, 0, 0, false);  // Defaults
+                    toRet[i, j] = new StaticState.AreaEdge(i, j, 0, 0, 0, 0, false, false, false, false, false, false, false, false);  // Defaults
                 }
             }
             // Replace all the ones with actual data! Note 'distance' and stuff is not going to be tested since it is too tedious. Auto generation of SS should fill this in though.
-            toRet[0, 1] = new StaticState.AreaEdge(0, 1, true, true, 5, 5, 3, 5, false);
-            toRet[0, 3] = new StaticState.AreaEdge(0, 3, true, true, 5, 5, 6, 5, true);
-            toRet[1, 0] = new StaticState.AreaEdge(1, 0, true, true, 5, 5, -3, 0, false);
-            toRet[3, 0] = new StaticState.AreaEdge(3, 0, true, true, 5, 5, -6, 0, false);
-            toRet[3, 4] = new StaticState.AreaEdge(3, 4, true, true, 5, 5, 0, 1, false);
-            toRet[4, 3] = new StaticState.AreaEdge(4, 3, true, true, 5, 5, 0, 1, false);
-            toRet[2, 1] = new StaticState.AreaEdge(2, 1, true, true, 5, 5, 4, 4, false);
-            toRet[1, 2] = new StaticState.AreaEdge(1, 2, true, true, 5, 5, -4, 0, false);
-            toRet[5, 1] = new StaticState.AreaEdge(5, 1, true, false, 7, 4, 5, 8, false);
-            toRet[1, 5] = new StaticState.AreaEdge(1, 5, true, false, 7, 3, -5, 2, false);
-            toRet[2, 5] = new StaticState.AreaEdge(2, 5, true, true, 5, 5, 0, 0, false);
-            toRet[5, 2] = new StaticState.AreaEdge(5, 2, true, true, 5, 5, 0, 0, false);
-            toRet[5, 6] = new StaticState.AreaEdge(5, 6, true, true, 5, 5, 2, 1, false);
-            toRet[6, 5] = new StaticState.AreaEdge(6, 5, true, true, 5, 5, -2, 0, false);
-            toRet[6, 7] = new StaticState.AreaEdge(6, 7, true, true, 5, 5, 6, 3, true);
-            toRet[7, 6] = new StaticState.AreaEdge(7, 6, true, true, 5, 5, -6, 0, false);
-            toRet[6, 8] = new StaticState.AreaEdge(6, 8, true, true, 5, 5, 0, 0, false);
-            toRet[8, 6] = new StaticState.AreaEdge(8, 6, true, true, 5, 5, 0, 0, false);
-            toRet[7, 8] = new StaticState.AreaEdge(7, 8, true, true, 5, 5, 1, 0, false);
-            toRet[8, 7] = new StaticState.AreaEdge(8, 7, true, true, 5, 5, -1, 0, false);
-            toRet[8, 9] = new StaticState.AreaEdge(8, 9, true, false, 5, 5, 0, 0, false);
-            toRet[9, 8] = new StaticState.AreaEdge(9, 8, true, false, 5, 5, 0, 0, false);
+            // int fromNodeId, int toNodeId, float distance, float minimumHearableVolume, int combatAdvantage, int relativeCoverLevel, bool hasControlOver, bool walkTraversability, bool crawlTraversability, bool climbTraversability, bool vaultTraversability, bool fullVisibility, bool partialVisibility, bool travelVisibility
+            toRet[0, 1] = new StaticState.AreaEdge(0, 1, 5, 5, 3, 5, false, true, false, false, false, true, false, false);
+            toRet[0, 3] = new StaticState.AreaEdge(0, 3, 5, 5, 6, 5, true, true, false, false, false, true, false, false);
+            toRet[1, 0] = new StaticState.AreaEdge(1, 0, 5, 5, -3, 0, false, true, false, false, false, true, false, false);
+            toRet[3, 0] = new StaticState.AreaEdge(3, 0, 5, 5, -6, 0, false, true, false, false, false, true, false, false);
+            toRet[3, 4] = new StaticState.AreaEdge(3, 4, 5, 5, 0, 1, false, true, false, false, false, true, false, false);
+            toRet[4, 3] = new StaticState.AreaEdge(4, 3, 5, 5, 0, 1, false, true, false, false, false, true, false, false);
+            toRet[2, 1] = new StaticState.AreaEdge(2, 1, 5, 5, 4, 4, false, true, false, false, false, true, false, false);
+            toRet[1, 2] = new StaticState.AreaEdge(1, 2, 5, 5, -4, 0, false, true, false, false, false, true, false, false);
+            toRet[5, 1] = new StaticState.AreaEdge(5, 1, 7, 4, 5, 8, false, false, false, false, false, true, false, false);
+            toRet[1, 5] = new StaticState.AreaEdge(1, 5, 7, 3, -5, 2, false, false, false, false, false, true, false, false);
+            toRet[2, 5] = new StaticState.AreaEdge(2, 5, 5, 5, 0, 0, false, true, false, false, false, true, false, false);
+            toRet[5, 2] = new StaticState.AreaEdge(5, 2, 5, 5, 0, 0, false, true, false, false, false, true, false, false);
+            toRet[5, 6] = new StaticState.AreaEdge(5, 6, 5, 5, 2, 1, false, true, false, false, false, true, false, false);
+            toRet[6, 5] = new StaticState.AreaEdge(6, 5, 5, 5, -2, 0, false, true, false, false, false, true, false, false);
+            toRet[6, 7] = new StaticState.AreaEdge(6, 7, 5, 5, 6, 3, true, true, false, false, false, true, false, false);
+            toRet[7, 6] = new StaticState.AreaEdge(7, 6, 5, 5, -6, 0, false, true, false, false, false, true, false, false);
+            toRet[6, 8] = new StaticState.AreaEdge(6, 8, 5, 5, 0, 0, false, true, false, false, false, true, false, false);
+            toRet[8, 6] = new StaticState.AreaEdge(8, 6, 5, 5, 0, 0, false, true, false, false, false, true, false, false);
+            toRet[7, 8] = new StaticState.AreaEdge(7, 8, 5, 5, 1, 0, false, true, false, false, false, true, false, false);
+            toRet[8, 7] = new StaticState.AreaEdge(8, 7, 5, 5, -1, 0, false, true, false, false, false, true, false, false);
+            toRet[8, 9] = new StaticState.AreaEdge(8, 9, 5, 5, 0, 0, false, false, false, false, false, true, false, false);
+            toRet[9, 8] = new StaticState.AreaEdge(9, 8, 5, 5, 0, 0, false, false, false, false, false, true, false, false);
 
             return toRet;
         }
@@ -125,9 +126,9 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             }
 
             // Assert visibility relationships
-            Func<int, int, bool> vis = s.CanSeeReader();
+            Func<int, int, bool> vis = s.FullVisibilityReader();
             Func<int, int, bool> con = s.HasControlOverReader();
-            Func<int, int, bool> trav = s.IsConnectedReader();
+            Func<int, int, bool> trav = s.IsTraversableReader();
             for (int i = 0; i < numNodes; i++) {
                 for (int j = 0; j < numNodes; j++) {
                     // Should be visible
@@ -144,14 +145,14 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                         || (i == 8 && j == 9 || i == 9 && j == 8)
                        ) {
                         Assert.IsTrue(vis(i, j));
-                        Assert.IsTrue(s.GetEdge(i, j).CanSee);
-                        Assert.IsTrue(s.GetEdge(i, j).CanBeSeenFrom);
+                        Assert.IsTrue(s.GetEdge(i, j).FullVisibility);
+                        Assert.IsTrue(s.GetEdge(i, j).IsFullyVisibleFrom);
                     }
                     // Should NOT be visible
                     else {
                         Assert.IsFalse(vis(i, j));
-                        Assert.IsFalse(s.GetEdge(i, j).CanSee);
-                        Assert.IsFalse(s.GetEdge(i, j).CanBeSeenFrom);
+                        Assert.IsFalse(s.GetEdge(i, j).FullVisibility);
+                        Assert.IsFalse(s.GetEdge(i, j).IsFullyVisibleFrom);
                     }
 
                     // Should 'control'
@@ -178,12 +179,12 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                         || (i == 7 && j == 8 || i == 8 && j == 7)
                        ) {
                         Assert.IsTrue(trav(i, j));
-                        Assert.IsTrue(s.GetEdge(i, j).IsConnected);
+                        Assert.IsTrue(s.GetEdge(i, j).IsTraversable);
                     }
                     // Should NOT be traversable
                     else {
                         Assert.IsFalse(trav(i, j));
-                        Assert.IsFalse(s.GetEdge(i, j).IsConnected);
+                        Assert.IsFalse(s.GetEdge(i, j).IsTraversable);
                     }
                 }
             }

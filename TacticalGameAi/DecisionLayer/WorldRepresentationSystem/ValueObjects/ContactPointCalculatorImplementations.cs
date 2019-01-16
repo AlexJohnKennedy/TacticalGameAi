@@ -18,12 +18,12 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ContactPointCal
             // Contact nodes which are adjacent to each other are classed as the same 'Contact Point', by being placed together into a group.
 
             // Start with all nodes visible to the source node in the candidate set.
-            HashSet<int> visible = s.GetVisibleNodes(node);
+            HashSet<int> visible = s.GetFullyVisibleNodes(node);
 
             // Find all Contact Nodes by just brute force dumb-assing it coz it's late
             HashSet<int> contactNodes = new HashSet<int>();
             foreach(int candidate in visible) {
-                foreach(int connectedNode in s.GetConnectedNodes(candidate)) {
+                foreach(int connectedNode in s.GetTraversableNodes(candidate)) {
                     if (!visible.Contains(connectedNode) && connectedNode != node) {
                         contactNodes.Add(candidate);
                         break;
@@ -44,7 +44,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ContactPointCal
                     frontier.Enqueue(sourcePoint);
                     while (frontier.Count > 0) {
                         int n = frontier.Dequeue();
-                        foreach (int i in s.GetConnectedNodes(n)) {
+                        foreach (int i in s.GetTraversableNodes(n)) {
                             if (contactNodes.Contains(i) && !visited.Contains(i)) {
                                 // 'i' is a node that belongs in the same group as 'n' which we haven't already visited!
                                 frontier.Enqueue(i);

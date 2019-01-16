@@ -54,35 +54,61 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         public class AreaEdge {
             public int FromNodeId { get; }          // 'This' node (A)
             public int ToNodeId { get; }            // 'That' node (B)
-            public bool CanSee { get; }             // BOOL - Is a unit in this node able to see a unit in that node?
-            public bool IsConnected { get; }        // BOOL - Is a unit in this node able to move to that node.
             public float Distance { get; }          // Represents the physical distance between the two areas. (Used to determine how long it will take to get there, etc.)
             public float MinimumHearableVolume { get; }     // How loud a sound has to be in B for a unit in A to hear it.
             public int CombatAdvantage { get; }     // How much 'advantage' a unit in A has while engaging a unit in B. Negative values represent disadvantage.
             public int RelativeCoverLevel { get; }  // BOOL - True if a unit in A can take cover relative to area B.
             public bool HasControlOver { get; }     // BOOL - True if control over area A gives you control over area B.
 
-            internal AreaEdge oppositeEdge;  // Reference to the reverse edge, so we can more easily derive information.
-            public bool CanBeSeenFrom {
-                get { return oppositeEdge.CanSee; }
+            // Traversability qualities.
+            public bool WalkTraversability { get; }
+            public bool CrawlTraversability { get; }
+            public bool ClimbTraversability { get; }
+            public bool VaultTraversability { get; }
+            public bool IsTraversable {
+                get { return WalkTraversability || CrawlTraversability || ClimbTraversability || VaultTraversability; }
             }
+
+            // Visibility qualities.
+            public bool FullVisibility { get; }     // This means that anyone in the 'to' node is always able to be seen by someone in the from node; they cannot hide.
+            public bool PartialVisibility { get; }  // This means that someone in the 'to' node might be visible, or might be hidden depending on what they are doing. E.g. they could be crouching down behind something.
+            public bool TravelVisibility { get; }   // This means that someone in the 'to' node is not able to leave the 'to' node without being seen by someone in the from node. It does not imply full visibility.
+
+            internal AreaEdge oppositeEdge;  // Reference to the reverse edge, so we can more easily derive information.
+            
             public bool IsControlledBy {
                 get { return oppositeEdge.HasControlOver; }
             }
             public int EnemyCoverLevel {
                 get { return oppositeEdge.RelativeCoverLevel; }
             }
+            public bool IsFullyVisibleFrom {
+                get { return oppositeEdge.FullVisibility; }
+            }
+            public bool IsPartiallyVisibleFrom {
+                get { return oppositeEdge.PartialVisibility; }
+            }
+            public bool IsTravelVisibleFrom {
+                get { return oppositeEdge.TravelVisibility; }
+            }
 
-            public AreaEdge(int fromNodeId, int toNodeId, bool canSee, bool isConnected, float distance, float minimumHearableVolume, int combatAdvantage, int relativeCoverLevel, bool hasControlOver) {
+            public AreaEdge(int fromNodeId, int toNodeId, float distance, float minimumHearableVolume, int combatAdvantage, int relativeCoverLevel, bool hasControlOver, bool walkTraversability, bool crawlTraversability, bool climbTraversability, bool vaultTraversability, bool fullVisibility, bool partialVisibility, bool travelVisibility) {
                 FromNodeId = fromNodeId;
                 ToNodeId = toNodeId;
-                CanSee = canSee;
-                IsConnected = isConnected;
                 Distance = distance;
                 MinimumHearableVolume = minimumHearableVolume;
                 CombatAdvantage = combatAdvantage;
                 RelativeCoverLevel = relativeCoverLevel;
                 HasControlOver = hasControlOver;
+
+                WalkTraversability = walkTraversability;
+                CrawlTraversability = crawlTraversability;
+                ClimbTraversability = climbTraversability;
+                VaultTraversability = vaultTraversability;
+
+                FullVisibility = fullVisibility;
+                PartialVisibility = partialVisibility;
+                TravelVisibility = travelVisibility;
             }
         }
 
@@ -187,11 +213,29 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         }
 
         // Public Interface - Get a function which gains access to a subset of the edge data in the graph
-        public Func<int, int, bool> CanSeeReader() {
-            return (from, to) => areaEdges[from, to].CanSee;
+        public Func<int, int, bool> FullVisibilityReader() {
+            return (from, to) => areaEdges[from, to].FullVisibility;
         }
-        public Func<int, int, bool> IsConnectedReader() {
-            return (from, to) => areaEdges[from, to].IsConnected;
+        public Func<int, int, bool> PartialVisibilityReader() {
+            return (from, to) => areaEdges[from, to].PartialVisibility;
+        }
+        public Func<int, int, bool> TravelVisibilityReader() {
+            return (from, to) => areaEdges[from, to].TravelVisibility;
+        }
+        public Func<int, int, bool> IsTraversableReader() {
+            return (from, to) => areaEdges[from, to].IsTraversable;
+        }
+        public Func<int, int, bool> WalkTraversabilityReader() {
+            return (from, to) => areaEdges[from, to].WalkTraversability;
+        }
+        public Func<int, int, bool> CrawlTraversabilityReader() {
+            return (from, to) => areaEdges[from, to].CrawlTraversability;
+        }
+        public Func<int, int, bool> ClimbTraversabilityReader() {
+            return (from, to) => areaEdges[from, to].ClimbTraversability;
+        }
+        public Func<int, int, bool> VaultTraversabilityReader() {
+            return (from, to) => areaEdges[from, to].VaultTraversability;
         }
         public Func<int, int, bool> HasControlOverReader() {
             return (from, to) => areaEdges[from, to].HasControlOver;
@@ -220,11 +264,14 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             }
             return toRet;
         }
-        public HashSet<int> GetVisibleNodes(int node) {
-            return NodeQueryBasedOnEdgeCondition(node, n => areaEdges[node, n].CanSee);
+        public HashSet<int> GetFullyVisibleNodes(int node) {
+            return NodeQueryBasedOnEdgeCondition(node, n => areaEdges[node, n].FullVisibility);
         }
-        public HashSet<int> GetConnectedNodes(int node) {
-            return NodeQueryBasedOnEdgeCondition(node, n => areaEdges[node, n].IsConnected);
+        public HashSet<int> GetTravelVisibleNodes(int node) {
+            return NodeQueryBasedOnEdgeCondition(node, n => areaEdges[node, n].TravelVisibility);
+        }
+        public HashSet<int> GetTraversableNodes(int node) {
+            return NodeQueryBasedOnEdgeCondition(node, n => areaEdges[node, n].IsTraversable);
         }
     }
 }
