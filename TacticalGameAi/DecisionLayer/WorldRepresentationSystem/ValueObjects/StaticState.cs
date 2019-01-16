@@ -27,6 +27,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public bool AttackObjective { get; }
             public bool DefendObjective { get; }
             public bool EnemyOriginPoint { get; }
+            public bool Indoors { get; }
 
             // A set of sets, where each inner set is a group of adjacent contact point nodes. Each group represents one 'angle' (in the Counter-Strike sense) that this area is exposed to.
             internal HashSet<HashSet<int>> contactPointGroups;  // Internal so that the staticState constructor can populate upon construction!
@@ -34,7 +35,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 get { return contactPointGroups; }
             }
 
-            public AreaNode(int nodeId, int generalAreaId, int coverLevel, int concealmentLevel, bool chokepoint, int tacticalValue, int exposureLevel, bool deadEnd, bool junction, bool overwatchLocation, bool attackObjective, bool defendObjective, bool enemyOriginPoint) {
+            public AreaNode(int nodeId, int generalAreaId, int coverLevel, int concealmentLevel, bool chokepoint, int tacticalValue, int exposureLevel, bool deadEnd, bool junction, bool overwatchLocation, bool attackObjective, bool defendObjective, bool enemyOriginPoint, bool indoors) {
                 NodeId = nodeId;
                 GeneralAreaId = generalAreaId;
                 CoverLevel = coverLevel;
@@ -48,6 +49,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 AttackObjective = attackObjective;
                 DefendObjective = defendObjective;
                 EnemyOriginPoint = enemyOriginPoint;
+                Indoors = indoors;
                 contactPointGroups = new HashSet<HashSet<int>>();
             }
         }
@@ -210,6 +212,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         }
         public Func<int, IReadOnlyCollection<IReadOnlyCollection<int>>> ContactPointGroupsReader() {
             return node => areaNodes[node].ContactPointGroups;
+        }
+        public Func<int, bool> IndoorsReader() {
+            return node => areaNodes[node].Indoors;
         }
 
         // Public Interface - Get a function which gains access to a subset of the edge data in the graph

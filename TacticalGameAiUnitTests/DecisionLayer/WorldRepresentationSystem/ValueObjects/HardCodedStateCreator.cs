@@ -16,16 +16,16 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
         private static StaticState.AreaNode[] PrepareNodeData() {
             StaticState.AreaNode[] toRet = new StaticState.AreaNode[numNodes];
-            toRet[0] = new StaticState.AreaNode(0, 0, 8, 3, false, 5, 5, false, false, false, false, false, false);
-            toRet[1] = new StaticState.AreaNode(1, 0, 0, 0, true, 1, 8, false, false, false, false, false, false);
-            toRet[2] = new StaticState.AreaNode(2, 1, 6, 1, false, 3, 3, false, false, true, false, false, false);
-            toRet[3] = new StaticState.AreaNode(3, 0, 0, 0, false, 1, 5, true, false, false, false, false, false);
-            toRet[4] = new StaticState.AreaNode(4, 0, 0, 5, false, 2, 1, true, false, false, false, true, false);
-            toRet[5] = new StaticState.AreaNode(5, 1, 3, 1, false, 6, 2, false, false, true, false, false, false);
-            toRet[6] = new StaticState.AreaNode(6, 1, 0, 0, true, 3, 5, false, true, false, false, false, true);
-            toRet[7] = new StaticState.AreaNode(7, 2, 0, 0, false, 1, 8, true, false, false, false, false, true);
-            toRet[8] = new StaticState.AreaNode(8, 2, 0, 0, false, 1, 8, true, false, false, true, false, false);
-            toRet[9] = new StaticState.AreaNode(9, 2, 0, 0, false, 1, 5, true, false, false, false, false, false);
+            toRet[0] = new StaticState.AreaNode(0, 0, 8, 3, false, 5, 5, false, false, false, false, false, false, true);
+            toRet[1] = new StaticState.AreaNode(1, 0, 0, 0, true, 1, 8, false, false, false, false, false, false, true);
+            toRet[2] = new StaticState.AreaNode(2, 1, 6, 1, false, 3, 3, false, false, true, false, false, false, true);
+            toRet[3] = new StaticState.AreaNode(3, 0, 0, 0, false, 1, 5, true, false, false, false, false, false, true);
+            toRet[4] = new StaticState.AreaNode(4, 0, 0, 5, false, 2, 1, true, false, false, false, true, false, true);
+            toRet[5] = new StaticState.AreaNode(5, 1, 3, 1, false, 6, 2, false, false, true, false, false, false, true);
+            toRet[6] = new StaticState.AreaNode(6, 1, 0, 0, true, 3, 5, false, true, false, false, false, true, true);
+            toRet[7] = new StaticState.AreaNode(7, 2, 0, 0, false, 1, 8, true, false, false, false, false, true, true);
+            toRet[8] = new StaticState.AreaNode(8, 2, 0, 0, false, 1, 8, true, false, false, true, false, false, true);
+            toRet[9] = new StaticState.AreaNode(9, 2, 0, 0, false, 1, 5, true, false, false, false, false, false, true);
 
             return toRet;
         }
