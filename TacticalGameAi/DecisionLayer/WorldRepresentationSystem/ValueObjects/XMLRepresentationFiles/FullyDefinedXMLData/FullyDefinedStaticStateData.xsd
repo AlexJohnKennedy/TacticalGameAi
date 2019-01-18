@@ -1,12 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<xs:schema id="UnderivedStaticStateData"
-    targetNamespace="http://tempuri.org/UnderivedStaticStateData.xsd"
+<xs:schema id="FullyDefinedStaticStateData"
+    targetNamespace="http://tempuri.org/FullyDefinedStaticStateData.xsd"
     elementFormDefault="qualified"
-    xmlns="http://tempuri.org/UnderivedStaticStateData.xsd"
-    xmlns:mstns="http://tempuri.org/UnderivedStaticStateData.xsd"
+    xmlns="http://tempuri.org/FullyDefinedStaticStateData.xsd"
+    xmlns:mstns="http://tempuri.org/FullyDefinedStaticStateData.xsd"
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
 >
-  
   <!-- DEFINE SUBTYPES -->
   <!-- NodeData -->
   <xs:element name="NodeData">
@@ -30,6 +29,21 @@
     </xs:complexType>
   </xs:element>
   
+  <!-- Contact Point Groups -->
+  <xs:element name="ContactPointGroups">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Group" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="ContactNode" type="xs:integer" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
   <!-- EdgeData List types -->
   <xs:element name="MinimumHearableVolumeList">
     <xs:complexType>
@@ -195,7 +209,22 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
-  
+
+  <xs:element name="DistanceList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Distance" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:decimal"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
   <!-- EdgeData -->
   <xs:element name="EdgeData">
     <xs:complexType>
@@ -211,10 +240,11 @@
         <xs:element ref="FullVisibilityList"/>
         <xs:element ref="PartialVisibilityList"/>
         <xs:element ref="TravelVisibilityList"/>
+        <xs:element ref="DistanceList"/>
       </xs:all>
     </xs:complexType>
   </xs:element>
-  
+
   <!-- Queryable node sets types -->
   <xs:element name="ChokePoints">
     <xs:complexType>
@@ -271,7 +301,7 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
-  
+
   <!-- QueryableNodeSets -->
   <xs:element name="QueryableNodeSets">
     <xs:complexType>
@@ -286,20 +316,21 @@
       </xs:all>
     </xs:complexType>
   </xs:element>
-  
+
   <!-- Area Node -->
   <xs:element name="AreaNode">
     <xs:complexType>
       <!-- AreaNode must contain data, and edge data -->
       <xs:all>
         <xs:element ref="mstns:NodeData"/>
+        <xs:element ref="mstns:ContactPointGroups"/>
         <xs:element ref="mstns:EdgeData"/>
       </xs:all>
       <xs:attribute name="id" type="xs:integer" use="required"/>
     </xs:complexType>
   </xs:element>
-  
-  <!-- Root Node definition -->  
+
+  <!-- Root Node definition -->
   <xs:element name="StaticState">
     <xs:complexType>
       <xs:sequence>
@@ -311,3 +342,5 @@
     </xs:complexType>
   </xs:element>
 </xs:schema>
+
+

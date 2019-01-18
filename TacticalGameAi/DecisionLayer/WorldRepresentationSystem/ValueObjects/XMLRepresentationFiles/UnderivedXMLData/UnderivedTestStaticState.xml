@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<StaticState xmlns="http://tempuri.org/UnderivedStaticStateData.xsd" unit-type="default" variation-id="default">
+  <AreaNode id ="0">
+    <NodeData>
+      <GeneralAreaId>    0 </GeneralAreaId>
+      <CoverLevel>       8 </CoverLevel>
+      <ConcealmentLevel> 3 </ConcealmentLevel>
+      <TacticalValue>    5 </TacticalValue>
+      <ExposureLevel>    5 </ExposureLevel>
+      <Indoors> true </Indoors>
+      <AveragePosition>
+        <xVal> 0 </xVal>
+        <yVal> 20 </yVal>
+      </AveragePosition>
+    </NodeData>
+    <EdgeData>
+      
+    </EdgeData>
+  </AreaNode>
+</StaticState>
