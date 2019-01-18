@@ -24,15 +24,15 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             // Construct a FactAdder for each FactType, and create the appropriate EffectAdders for each FactAdder.
             factAdderDict.Add(FactType.FriendlyPresence, new FactAdder(FactType.FriendlyPresence,
                     new IEffectAdder[] {
-                        new VisibilityBasedEffectAdder(EffectType.Clear),
+                        new FullVisibilityBasedEffectAdder(EffectType.Clear),
                         new ControlBasedEffectAdder(EffectType.Controlled),
-                        new VisibilityBasedEffectAdder(EffectType.VisibleToFriendlies)
+                        new FullVisibilityBasedEffectAdder(EffectType.VisibleToFriendlies)
                     }
                 )
             );
             factAdderDict.Add(FactType.EnemyPresence, new FactAdder(FactType.EnemyPresence,
                     new IEffectAdder[] {
-                        new VisibilityBasedEffectAdder(EffectType.VisibleToEnemies),
+                        new FullVisibilityBasedEffectAdder(EffectType.VisibleToEnemies),
                         new ControlBasedEffectAdder(EffectType.ControlledByEnemy),
                     }
                 )

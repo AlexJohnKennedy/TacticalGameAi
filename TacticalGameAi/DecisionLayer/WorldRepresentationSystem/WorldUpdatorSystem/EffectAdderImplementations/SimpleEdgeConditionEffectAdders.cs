@@ -26,7 +26,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         }
 
         public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
-            SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, world.StaticState.IsConnectedReader(), effectType);
+            SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, world.StaticState.IsTraversableReader(), effectType);
         }
     }
 
@@ -42,15 +42,27 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         }
     }
 
-    public class VisibilityBasedEffectAdder : IEffectAdder {
+    public class FullVisibilityBasedEffectAdder : IEffectAdder {
         private EffectType effectType;
 
-        public VisibilityBasedEffectAdder(EffectType effectType) {
+        public FullVisibilityBasedEffectAdder(EffectType effectType) {
             this.effectType = effectType;
         }
 
         public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
-            SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, world.StaticState.CanSeeReader(), effectType);
+            SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, world.StaticState.FullVisibilityReader(), effectType);
+        }
+    }
+
+    public class TravelVisibilityBasedEffectAdder : IEffectAdder {
+        private EffectType effectType;
+
+        public TravelVisibilityBasedEffectAdder(EffectType effectType) {
+            this.effectType = effectType;
+        }
+
+        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
+            SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, world.StaticState.TravelVisibilityReader(), effectType);
         }
     }
 
@@ -62,7 +74,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         }
 
         public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
-            SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, (from, to) => world.StaticState.CanSeeReader()(to, from), effectType);
+            SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, (from, to) => world.StaticState.FullVisibilityReader()(to, from), effectType);
         }
     }
 }
