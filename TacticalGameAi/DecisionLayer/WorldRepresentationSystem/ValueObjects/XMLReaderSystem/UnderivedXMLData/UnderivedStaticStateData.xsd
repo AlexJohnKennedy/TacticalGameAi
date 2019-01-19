@@ -34,7 +34,7 @@
   <xs:element name="MinimumHearableVolumeList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="MinimumVolume" maxOccurs="unbounded">
+        <xs:element name="MinimumHearableVolume" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:all>
               <xs:element name="toNodeId" type="xs:integer"/>
@@ -49,7 +49,7 @@
   <xs:element name="CombatAdvantageList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="CombatAdvantage" maxOccurs="unbounded">
+        <xs:element name="CombatAdvantage" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:all>
               <xs:element name="toNodeId" type="xs:integer"/>
@@ -64,7 +64,7 @@
   <xs:element name="RelativeCoverLevelList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="RelativeCoverLevel" maxOccurs="unbounded">
+        <xs:element name="RelativeCoverLevel" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:all>
               <xs:element name="toNodeId" type="xs:integer"/>
@@ -79,7 +79,7 @@
   <xs:element name="HasControlOverList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="HasControlOver" maxOccurs="unbounded">
+        <xs:element name="HasControlOver" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:all>
               <xs:element name="toNodeId" type="xs:integer"/>
@@ -94,7 +94,7 @@
   <xs:element name="WalkTraversabilityList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="WalkTraversability" maxOccurs="unbounded">
+        <xs:element name="WalkTraversability" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:all>
               <xs:element name="toNodeId" type="xs:integer"/>
@@ -109,7 +109,7 @@
   <xs:element name="CrawlTraversabilityList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="CrawlTraversability" maxOccurs="unbounded">
+        <xs:element name="CrawlTraversability" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:all>
               <xs:element name="toNodeId" type="xs:integer"/>
@@ -124,7 +124,7 @@
   <xs:element name="VaultTraversabilityList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="VaultTraversability" maxOccurs="unbounded">
+        <xs:element name="VaultTraversability" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:all>
               <xs:element name="toNodeId" type="xs:integer"/>
@@ -139,7 +139,7 @@
   <xs:element name="ClimbTraversabilityList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="ClimbTraversability" maxOccurs="unbounded">
+        <xs:element name="ClimbTraversability" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:all>
               <xs:element name="toNodeId" type="xs:integer"/>
@@ -154,7 +154,7 @@
   <xs:element name="FullVisibilityList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="FullVisibility" maxOccurs="unbounded">
+        <xs:element name="FullVisibility" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:all>
               <xs:element name="toNodeId" type="xs:integer"/>
@@ -169,7 +169,7 @@
   <xs:element name="PartialVisibilityList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="PartialVisibility" maxOccurs="unbounded">
+        <xs:element name="PartialVisibility" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:all>
               <xs:element name="toNodeId" type="xs:integer"/>
@@ -184,7 +184,7 @@
   <xs:element name="TravelVisibilityList">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="TravelVisibility" maxOccurs="unbounded">
+        <xs:element name="TravelVisibility" minOccurs="0" maxOccurs="unbounded">
           <xs:complexType>
             <xs:all>
               <xs:element name="toNodeId" type="xs:integer"/>
@@ -216,10 +216,10 @@
   </xs:element>
   
   <!-- Queryable node sets types -->
-  <xs:element name="ChokePoints">
+  <xs:element name="Chokepoints">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="NodeId" type="xs:integer" maxOccurs="unbounded"/>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -227,7 +227,7 @@
   <xs:element name="DeadEnds">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="NodeId" type="xs:integer" maxOccurs="unbounded"/>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -235,7 +235,7 @@
   <xs:element name="Junctions">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="NodeId" type="xs:integer" maxOccurs="unbounded"/>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -243,7 +243,7 @@
   <xs:element name="OverwatchLocations">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="NodeId" type="xs:integer" maxOccurs="unbounded"/>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -251,7 +251,7 @@
   <xs:element name="AttackObjectives">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="NodeId" type="xs:integer" maxOccurs="unbounded"/>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -259,7 +259,7 @@
   <xs:element name="DefendObjectives">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="NodeId" type="xs:integer" maxOccurs="unbounded"/>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -267,7 +267,7 @@
   <xs:element name="EnemyOriginPoints">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="NodeId" type="xs:integer" maxOccurs="unbounded"/>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -276,7 +276,7 @@
   <xs:element name="QueryableNodeSets">
     <xs:complexType>
       <xs:all>
-        <xs:element ref="ChokePoints"/>
+        <xs:element ref="Chokepoints"/>
         <xs:element ref="DeadEnds"/>
         <xs:element ref="Junctions"/>
         <xs:element ref="OverwatchLocations"/>
