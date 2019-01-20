@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <StaticState unit-type="default" variation-id="default" xmlns="http://tempuri.org/UnderivedStaticStateData.xsd">
+  <NumberOfNodes>10</NumberOfNodes>
   <AreaNode id="0">
     <NodeData>
       <GeneralAreaId>0</GeneralAreaId>

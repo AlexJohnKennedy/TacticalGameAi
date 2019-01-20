@@ -334,6 +334,7 @@
   <xs:element name="StaticState">
     <xs:complexType>
       <xs:sequence>
+        <xs:element name="NumberOfNodes" type="xs:integer"/>
         <xs:element ref="AreaNode" maxOccurs="unbounded"/>
         <xs:element ref="QueryableNodeSets"/>
       </xs:sequence>

@@ -292,8 +292,8 @@
     <xs:complexType>
       <!-- AreaNode must contain data, and edge data -->
       <xs:all>
-        <xs:element ref="mstns:NodeData"/>
-        <xs:element ref="mstns:EdgeData"/>
+        <xs:element ref="NodeData"/>
+        <xs:element ref="EdgeData"/>
       </xs:all>
       <xs:attribute name="id" type="xs:integer" use="required"/>
     </xs:complexType>
@@ -303,6 +303,7 @@
   <xs:element name="StaticState">
     <xs:complexType>
       <xs:sequence>
+        <xs:element name="NumberOfNodes" type="xs:integer"/>
         <xs:element ref="AreaNode" maxOccurs="unbounded"/>
         <xs:element ref="QueryableNodeSets"/>
       </xs:sequence>

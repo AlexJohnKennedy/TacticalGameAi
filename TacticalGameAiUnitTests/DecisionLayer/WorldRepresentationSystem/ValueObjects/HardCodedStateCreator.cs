@@ -26,6 +26,11 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             
             StaticState.AreaNode[] nodes = PrepareNodeData();
             StaticState.AreaEdge[,] edges = PrepareEdgeData();
+
+            writer.WriteStartElement("NumberOfNodes");
+            writer.WriteString(nodes.Length.ToString());
+            writer.WriteEndElement();
+
             for (int i=0; i<nodes.Length; i++) {
                 writer.WriteStartElement("AreaNode");
                 writer.WriteAttributeString("id", i.ToString());
