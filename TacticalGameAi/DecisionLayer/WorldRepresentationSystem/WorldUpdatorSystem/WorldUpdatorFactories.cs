@@ -26,7 +26,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                     new IEffectAdder[] {
                         new FullVisibilityBasedEffectAdder(EffectType.Clear),
                         new ControlBasedEffectAdder(EffectType.Controlled),
-                        new FullVisibilityBasedEffectAdder(EffectType.VisibleToFriendlies)
+                        new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToFriendlies)
                     }
                 )
             );

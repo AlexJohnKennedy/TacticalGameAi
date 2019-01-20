@@ -26,6 +26,7 @@
   <ItemGroup>
     <Folder Include="DecisionLayer\ActionSystem\" />
     <Folder Include="DecisionLayer\PlannerSystem\" />
+    <Folder Include="DecisionLayer\WorldRepresentationSystem\ValueObjects\XMLReaderSystemTests\" />
   </ItemGroup>
 
 </Project>

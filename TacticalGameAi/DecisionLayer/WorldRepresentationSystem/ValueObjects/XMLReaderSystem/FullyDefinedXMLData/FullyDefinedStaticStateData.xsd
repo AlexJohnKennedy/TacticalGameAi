@@ -1,0 +1,347 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="FullyDefinedStaticStateData"
+    targetNamespace="http://tempuri.org/FullyDefinedStaticStateData.xsd"
+    elementFormDefault="qualified"
+    xmlns="http://tempuri.org/FullyDefinedStaticStateData.xsd"
+    xmlns:mstns="http://tempuri.org/FullyDefinedStaticStateData.xsd"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+>
+  <!-- DEFINE SUBTYPES -->
+  <!-- NodeData -->
+  <xs:element name="NodeData">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="GeneralAreaId" type="xs:integer"/>
+        <xs:element name="CoverLevel" type="xs:integer"/>
+        <xs:element name="ConcealmentLevel" type="xs:integer"/>
+        <xs:element name="TacticalValue" type="xs:integer"/>
+        <xs:element name="ExposureLevel" type="xs:integer"/>
+        <xs:element name="Indoors" type="xs:boolean"/>
+        <xs:element name="AveragePosition">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="xVal" type="xs:decimal"/>
+              <xs:element name="yVal" type="xs:decimal"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+  
+  <!-- Contact Point Groups -->
+  <xs:element name="ContactPointGroups">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Group" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="ContactNode" type="xs:integer" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- EdgeData List types -->
+  <xs:element name="MinimumHearableVolumeList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="MinimumHearableVolume" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:decimal"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="CombatAdvantageList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="CombatAdvantage" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:integer"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="RelativeCoverLevelList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="RelativeCoverLevel" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:integer"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="HasControlOverList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="HasControlOver" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:boolean"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="WalkTraversabilityList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="WalkTraversability" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:boolean"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="CrawlTraversabilityList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="CrawlTraversability" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:boolean"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="VaultTraversabilityList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="VaultTraversability" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:boolean"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ClimbTraversabilityList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="ClimbTraversability" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:boolean"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="FullVisibilityList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="FullVisibility" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:boolean"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="PartialVisibilityList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="PartialVisibility" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:boolean"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="TravelVisibilityList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="TravelVisibility" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:boolean"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DistanceList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Distance" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:all>
+              <xs:element name="toNodeId" type="xs:integer"/>
+              <xs:element name="Value" type="xs:decimal"/>
+            </xs:all>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- EdgeData -->
+  <xs:element name="EdgeData">
+    <xs:complexType>
+      <xs:all>
+        <xs:element ref="MinimumHearableVolumeList"/>
+        <xs:element ref="CombatAdvantageList"/>
+        <xs:element ref="RelativeCoverLevelList"/>
+        <xs:element ref="HasControlOverList"/>
+        <xs:element ref="WalkTraversabilityList"/>
+        <xs:element ref="ClimbTraversabilityList"/>
+        <xs:element ref="VaultTraversabilityList"/>
+        <xs:element ref="CrawlTraversabilityList"/>
+        <xs:element ref="FullVisibilityList"/>
+        <xs:element ref="PartialVisibilityList"/>
+        <xs:element ref="TravelVisibilityList"/>
+        <xs:element ref="DistanceList"/>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Queryable node sets types -->
+  <xs:element name="Chokepoints">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DeadEnds">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Junctions">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="OverwatchLocations">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="AttackObjectives">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="DefendObjectives">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="EnemyOriginPoints">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="NodeId" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- QueryableNodeSets -->
+  <xs:element name="QueryableNodeSets">
+    <xs:complexType>
+      <xs:all>
+        <xs:element ref="Chokepoints"/>
+        <xs:element ref="DeadEnds"/>
+        <xs:element ref="Junctions"/>
+        <xs:element ref="OverwatchLocations"/>
+        <xs:element ref="AttackObjectives"/>
+        <xs:element ref="DefendObjectives"/>
+        <xs:element ref="EnemyOriginPoints"/>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Area Node -->
+  <xs:element name="AreaNode">
+    <xs:complexType>
+      <!-- AreaNode must contain data, and edge data -->
+      <xs:all>
+        <xs:element ref="mstns:NodeData"/>
+        <xs:element ref="mstns:ContactPointGroups"/>
+        <xs:element ref="mstns:EdgeData"/>
+      </xs:all>
+      <xs:attribute name="id" type="xs:integer" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Root Node definition -->
+  <xs:element name="StaticState">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="NumberOfNodes" type="xs:integer"/>
+        <xs:element ref="AreaNode" maxOccurs="unbounded"/>
+        <xs:element ref="QueryableNodeSets"/>
+      </xs:sequence>
+      <xs:attribute name="unit-type" type="xs:string" use="required"/>
+      <xs:attribute name="variation-id" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+
+

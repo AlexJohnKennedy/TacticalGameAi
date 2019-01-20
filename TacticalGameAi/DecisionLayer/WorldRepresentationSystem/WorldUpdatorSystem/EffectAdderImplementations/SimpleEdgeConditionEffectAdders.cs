@@ -54,15 +54,15 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         }
     }
 
-    public class TravelVisibilityBasedEffectAdder : IEffectAdder {
+    public class AtLeastTravelVisibilityBasedEffectAdder : IEffectAdder {
         private EffectType effectType;
 
-        public TravelVisibilityBasedEffectAdder(EffectType effectType) {
+        public AtLeastTravelVisibilityBasedEffectAdder(EffectType effectType) {
             this.effectType = effectType;
         }
 
         public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
-            SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, world.StaticState.TravelVisibilityReader(), effectType);
+            SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, (from, to) => world.StaticState.TravelVisibilityReader()(from, to) || world.StaticState.FullVisibilityReader()(from, to), effectType);
         }
     }
 

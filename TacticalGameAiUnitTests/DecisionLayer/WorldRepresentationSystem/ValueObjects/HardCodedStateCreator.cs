@@ -4,17 +4,126 @@ using System;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHiddenTypes;
 using System.Collections.Generic;
+using System.Xml;
 
 namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueObjects {
     public static class HardCodedStateCreator {
         private static int numNodes = 10;   // Let's test this with 10 areas
         private static int defaultTime = 0;
 
-        public static StaticState CreateTestStaticState() {
-            return new StaticState(PrepareNodeData(), PrepareEdgeData());
+        public static StaticState CreateTestStaticStateFromHardCode() {
+            return new StaticState(PrepareNodeDataFromHardCode(), PrepareEdgeDataFromHardCode());
         }
 
-        private static StaticState.AreaNode[] PrepareNodeData() {
+        public static void WriteTestStaticStateToXML(string outputPath) {
+            XmlWriter writer = XmlWriter.Create(outputPath);
+            writer.WriteStartDocument();
+
+            // Root element
+            writer.WriteStartElement("StaticState", "http://tempuri.org/UnderivedStaticStateData.xsd");
+            writer.WriteAttributeString("unit-type", "default");
+            writer.WriteAttributeString("variation-id", "default");
+            
+            StaticState.AreaNode[] nodes = PrepareNodeDataFromHardCode();
+            StaticState.AreaEdge[,] edges = PrepareEdgeDataFromHardCode();
+
+            writer.WriteStartElement("NumberOfNodes");
+            writer.WriteString(nodes.Length.ToString());
+            writer.WriteEndElement();
+
+            for (int i=0; i<nodes.Length; i++) {
+                writer.WriteStartElement("AreaNode");
+                writer.WriteAttributeString("id", i.ToString());
+
+                    writer.WriteStartElement("NodeData");
+                        writer.WriteStartElement("GeneralAreaId");
+                            writer.WriteString(nodes[i].GeneralAreaId.ToString());
+                        writer.WriteEndElement();
+                        writer.WriteStartElement("CoverLevel");
+                            writer.WriteString(nodes[i].CoverLevel.ToString());
+                        writer.WriteEndElement();
+                        writer.WriteStartElement("ConcealmentLevel");
+                            writer.WriteString(nodes[i].ConcealmentLevel.ToString());
+                        writer.WriteEndElement();
+                        writer.WriteStartElement("TacticalValue");
+                            writer.WriteString(nodes[i].TacticalValue.ToString());
+                        writer.WriteEndElement();
+                        writer.WriteStartElement("ExposureLevel");
+                            writer.WriteString(nodes[i].ExposureLevel.ToString());
+                        writer.WriteEndElement();
+                        writer.WriteStartElement("Indoors");
+                            writer.WriteString(nodes[i].Indoors.ToString().ToLowerInvariant());
+                        writer.WriteEndElement();
+                        writer.WriteStartElement("AveragePosition");
+                            writer.WriteStartElement("xVal");
+                                writer.WriteString("0");    // TODO
+                            writer.WriteEndElement();
+                            writer.WriteStartElement("yVal");
+                                writer.WriteString("0");    // TODO
+                            writer.WriteEndElement();
+                        writer.WriteEndElement();
+                    writer.WriteEndElement();
+
+                writer.WriteStartElement("EdgeData");
+                WriteEdgeData(writer, "MinimumHearableVolumeList", "MinimumHearableVolume", j => false, j => edges[i, j].MinimumHearableVolume.ToString(), nodes.Length);
+                WriteEdgeData(writer, "CombatAdvantageList", "CombatAdvantage", j => edges[i, j].CombatAdvantage == 0, j => edges[i, j].CombatAdvantage.ToString(), nodes.Length);
+                WriteEdgeData(writer, "RelativeCoverLevelList", "RelativeCoverLevel", j => edges[i, j].RelativeCoverLevel == Int32.MaxValue, j => edges[i, j].RelativeCoverLevel.ToString(), nodes.Length);
+                WriteEdgeData(writer, "HasControlOverList", "HasControlOver", j => edges[i, j].HasControlOver == false, j => edges[i, j].HasControlOver.ToString(), nodes.Length);
+                WriteEdgeData(writer, "WalkTraversabilityList", "WalkTraversability", j => edges[i, j].WalkTraversability == false, j => edges[i, j].WalkTraversability.ToString(), nodes.Length);
+                WriteEdgeData(writer, "CrawlTraversabilityList", "CrawlTraversability", j => edges[i, j].CrawlTraversability == false, j => edges[i, j].CrawlTraversability.ToString(), nodes.Length);
+                WriteEdgeData(writer, "VaultTraversabilityList", "VaultTraversability", j => edges[i, j].VaultTraversability == false, j => edges[i, j].VaultTraversability.ToString(), nodes.Length);
+                WriteEdgeData(writer, "ClimbTraversabilityList", "ClimbTraversability", j => edges[i, j].ClimbTraversability == false, j => edges[i, j].ClimbTraversability.ToString(), nodes.Length);
+                WriteEdgeData(writer, "FullVisibilityList", "FullVisibility", j => edges[i, j].FullVisibility == false, j => edges[i, j].FullVisibility.ToString(), nodes.Length);
+                WriteEdgeData(writer, "PartialVisibilityList", "PartialVisibility", j => edges[i, j].PartialVisibility == false, j => edges[i, j].PartialVisibility.ToString(), nodes.Length);
+                WriteEdgeData(writer, "TravelVisibilityList", "TravelVisibility", j => edges[i, j].TravelVisibility == false, j => edges[i, j].TravelVisibility.ToString(), nodes.Length);
+                writer.WriteEndElement();
+
+                writer.WriteEndElement();
+            }
+
+            writer.WriteStartElement("QueryableNodeSets");
+            WriteQueryableNodeSet(writer, "Chokepoints", i => nodes[i].Chokepoint, nodes.Length);
+            WriteQueryableNodeSet(writer, "DeadEnds", i => nodes[i].DeadEnd, nodes.Length);
+            WriteQueryableNodeSet(writer, "Junctions", i => nodes[i].Junction, nodes.Length);
+            WriteQueryableNodeSet(writer, "OverwatchLocations", i => nodes[i].OverwatchLocation, nodes.Length);
+            WriteQueryableNodeSet(writer, "AttackObjectives", i => nodes[i].AttackObjective, nodes.Length);
+            WriteQueryableNodeSet(writer, "DefendObjectives", i => nodes[i].DefendObjective, nodes.Length);
+            WriteQueryableNodeSet(writer, "EnemyOriginPoints", i => nodes[i].EnemyOriginPoint, nodes.Length);
+            writer.WriteEndElement();
+
+            writer.WriteEndDocument();
+            writer.Close();
+        }
+
+        private static void WriteQueryableNodeSet(XmlWriter writer, string listname, Func<int, bool> truthCondition, int n) {
+            writer.WriteStartElement(listname);
+            for (int i=0; i < n; i++) {
+                if (truthCondition(i)) {
+                    writer.WriteStartElement("NodeId");
+                    writer.WriteString(i.ToString());
+                    writer.WriteEndElement();
+                }
+            }
+            writer.WriteEndElement();
+        }
+
+        private static void WriteEdgeData(XmlWriter writer, string listname, string valueContainerName, Func<int, bool> skipCondition, Func<int, string> valueFunc, int n) {
+            writer.WriteStartElement(listname);
+            for (int j = 0; j < n; j++) {
+                if (skipCondition(j)) continue;
+                writer.WriteStartElement(valueContainerName);
+                writer.WriteStartElement("toNodeId");
+                writer.WriteString(j.ToString());
+                writer.WriteEndElement();
+                writer.WriteStartElement("Value");
+                writer.WriteString(valueFunc(j).ToLowerInvariant());
+                writer.WriteEndElement();
+                writer.WriteEndElement();
+            }
+            writer.WriteEndElement();
+        }
+
+        private static StaticState.AreaNode[] PrepareNodeDataFromHardCode() {
             StaticState.AreaNode[] toRet = new StaticState.AreaNode[numNodes];
             toRet[0] = new StaticState.AreaNode(0, 0, 8, 3, false, 5, 5, false, false, false, false, false, false, true);
             toRet[1] = new StaticState.AreaNode(1, 0, 0, 0, true, 1, 8, false, false, false, false, false, false, true);
@@ -29,11 +138,11 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
             return toRet;
         }
-        private static StaticState.AreaEdge[,] PrepareEdgeData() {
+        private static StaticState.AreaEdge[,] PrepareEdgeDataFromHardCode() {
             StaticState.AreaEdge[,] toRet = new StaticState.AreaEdge[numNodes, numNodes];
             for (int i = 0; i < numNodes; i++) {
                 for (int j = 0; j < numNodes; j++) {
-                    toRet[i, j] = new StaticState.AreaEdge(i, j, 0, 0, 0, 0, false, false, false, false, false, false, false, false);  // Defaults
+                    toRet[i, j] = new StaticState.AreaEdge(i, j, 0, 0, 0, Int32.MaxValue, false, false, false, false, false, false, false, false);  // Defaults
                 }
             }
             // Replace all the ones with actual data! Note 'distance' and stuff is not going to be tested since it is too tedious. Auto generation of SS should fill this in though.
