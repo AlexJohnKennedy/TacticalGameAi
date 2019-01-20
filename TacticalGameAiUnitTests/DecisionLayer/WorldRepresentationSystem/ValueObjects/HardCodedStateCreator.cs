@@ -11,8 +11,8 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         private static int numNodes = 10;   // Let's test this with 10 areas
         private static int defaultTime = 0;
 
-        public static StaticState CreateTestStaticState() {
-            return new StaticState(PrepareNodeData(), PrepareEdgeData());
+        public static StaticState CreateTestStaticStateFromHardCode() {
+            return new StaticState(PrepareNodeDataFromHardCode(), PrepareEdgeDataFromHardCode());
         }
 
         public static void WriteTestStaticStateToXML(string outputPath) {
@@ -24,8 +24,8 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             writer.WriteAttributeString("unit-type", "default");
             writer.WriteAttributeString("variation-id", "default");
             
-            StaticState.AreaNode[] nodes = PrepareNodeData();
-            StaticState.AreaEdge[,] edges = PrepareEdgeData();
+            StaticState.AreaNode[] nodes = PrepareNodeDataFromHardCode();
+            StaticState.AreaEdge[,] edges = PrepareEdgeDataFromHardCode();
 
             writer.WriteStartElement("NumberOfNodes");
             writer.WriteString(nodes.Length.ToString());
@@ -123,7 +123,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             writer.WriteEndElement();
         }
 
-        private static StaticState.AreaNode[] PrepareNodeData() {
+        private static StaticState.AreaNode[] PrepareNodeDataFromHardCode() {
             StaticState.AreaNode[] toRet = new StaticState.AreaNode[numNodes];
             toRet[0] = new StaticState.AreaNode(0, 0, 8, 3, false, 5, 5, false, false, false, false, false, false, true);
             toRet[1] = new StaticState.AreaNode(1, 0, 0, 0, true, 1, 8, false, false, false, false, false, false, true);
@@ -138,7 +138,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
             return toRet;
         }
-        private static StaticState.AreaEdge[,] PrepareEdgeData() {
+        private static StaticState.AreaEdge[,] PrepareEdgeDataFromHardCode() {
             StaticState.AreaEdge[,] toRet = new StaticState.AreaEdge[numNodes, numNodes];
             for (int i = 0; i < numNodes; i++) {
                 for (int j = 0; j < numNodes; j++) {

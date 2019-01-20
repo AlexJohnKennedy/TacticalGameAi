@@ -11,7 +11,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         [Test]
         public void StaticState_TestingDataReads_CorrectValues() {
             // Arrange the static state object to test.
-            StaticState s = HardCodedStateCreator.CreateTestStaticState();
+            StaticState s = HardCodedStateCreator.CreateTestStaticStateFromHardCode();
 
             // Test that it's working correctly.
             HardCodedStateCreator.CheckTestStaticState(s);

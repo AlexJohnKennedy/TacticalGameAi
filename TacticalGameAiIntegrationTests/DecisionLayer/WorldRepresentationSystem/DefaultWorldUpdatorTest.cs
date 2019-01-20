@@ -92,7 +92,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             WorldUpdator worldUpdator = new HardCodedDefaultWorldUpdatorBuilder().BuildWorldUpdator();
 
             // Create the testable WorldRepresentation with pre-defined static state, and with blank DynamicState and Interpretation
-            WorldRepresentation originalWorld = new WorldRepresentation(HardCodedStateCreator.CreateTestStaticState());
+            WorldRepresentation originalWorld = new WorldRepresentation(HardCodedStateCreator.CreateTestStaticStateFromHardCode());
 
             // Ensure that everything was created correctly.
             HardCodedStateCreator.CheckTestStaticState(originalWorld.StaticState);      // Checks Static state.
@@ -132,7 +132,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
         [Test]
         public void WorldUpdatorSystemAndWorldRepresentationSystem_BuildDefaultStateWithRevertsInvolved() {
             WorldUpdator worldUpdator = new HardCodedDefaultWorldUpdatorBuilder().BuildWorldUpdator();
-            WorldRepresentation originalWorld = new WorldRepresentation(HardCodedStateCreator.CreateTestStaticState());
+            WorldRepresentation originalWorld = new WorldRepresentation(HardCodedStateCreator.CreateTestStaticStateFromHardCode());
 
             // Ensure that everything was created correctly.
             HardCodedStateCreator.CheckTestStaticState(originalWorld.StaticState);      // Checks Static state.

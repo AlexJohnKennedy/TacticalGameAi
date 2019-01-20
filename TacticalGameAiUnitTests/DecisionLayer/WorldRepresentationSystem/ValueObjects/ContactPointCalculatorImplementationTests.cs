@@ -12,7 +12,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
         [Test]
         public void DefaultContactPointCalculator_RunOnHardCodedStaticState_ReturnsCorrectGroups() {
-            StaticState s = HardCodedStateCreator.CreateTestStaticState();
+            StaticState s = HardCodedStateCreator.CreateTestStaticStateFromHardCode();
             var reader = s.ContactPointGroupsReader();
 
             IContactPointCalculator calculator = new DefaultContactPointCalculator();
