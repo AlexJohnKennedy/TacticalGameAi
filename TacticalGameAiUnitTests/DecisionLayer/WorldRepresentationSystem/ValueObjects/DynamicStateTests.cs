@@ -65,7 +65,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
         private void TestModifiedDynamicState(DynamicState toTest) {
             // Test node data reads
-            Assert.IsTrue(toTest.GetNodeData(0).FriendlyPresence == 0);     // Should be changed! (Compared to the original)
+            Assert.IsTrue(toTest.GetNodeData(0).SquadMemberPresence == 0);     // Should be changed! (Compared to the original)
             Assert.IsTrue(toTest.GetNodeData(0).EnemyPresence == 0);
             Assert.IsTrue(!toTest.GetNodeData(0).IsFriendlyArea);           // Should be changed! (Compared to the original)
             Assert.IsTrue(!toTest.GetNodeData(0).IsClear);                  // Should be changed! (Compared to the original)
@@ -84,7 +84,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(!toTest.GetNodeData(3).IsControlledByTeam);       // Node 3 was previously being controlled by node zero friendlies! Node 4 friendlies do not 'control' this area, only observe it.
             Assert.IsTrue(!toTest.GetNodeData(3).IsControlledByEnemies);
             Assert.IsTrue(!toTest.GetNodeData(4).IsControlledByEnemies);
-            Assert.IsTrue(toTest.GetNodeData(4).FriendlyPresence == 1);
+            Assert.IsTrue(toTest.GetNodeData(4).SquadMemberPresence == 1);
             Assert.IsTrue(toTest.GetNodeData(4).IsFriendlyArea);
             Assert.IsTrue(toTest.GetNodeData(5).TakingFireMagnitudeLevel == 5);
             Assert.IsTrue(toTest.GetNodeData(5).VisibleToEnemies);
@@ -95,19 +95,19 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetNodeData(6).IsControlledByTeam == false);
             Assert.IsTrue(!toTest.GetNodeData(7).IsControlledByTeam);
             Assert.IsTrue(toTest.GetNodeData(7).EnemyPresence == 0);
-            Assert.IsTrue(toTest.GetNodeData(7).FriendlyPresence == 0);
+            Assert.IsTrue(toTest.GetNodeData(7).SquadMemberPresence == 0);
             Assert.IsTrue(toTest.GetNodeData(7).TakingFireMagnitudeLevel == 4);          // Testing the new Danger fact on node seven!
 
-            Assert.IsTrue(!toTest.GetNodeData(0).VisibleToFriendlies);
-            Assert.IsTrue(!toTest.GetNodeData(1).VisibleToFriendlies);
-            Assert.IsTrue(toTest.GetNodeData(3).VisibleToFriendlies);
-            Assert.IsTrue(toTest.GetNodeData(4).VisibleToFriendlies);
-            Assert.IsTrue(!toTest.GetNodeData(2).VisibleToFriendlies);
+            Assert.IsTrue(!toTest.GetNodeData(0).VisibleToSquad);
+            Assert.IsTrue(!toTest.GetNodeData(1).VisibleToSquad);
+            Assert.IsTrue(toTest.GetNodeData(3).VisibleToSquad);
+            Assert.IsTrue(toTest.GetNodeData(4).VisibleToSquad);
+            Assert.IsTrue(!toTest.GetNodeData(2).VisibleToSquad);
 
             // Do the same tests but using the graph-subset reader functions
-            Func<int, bool> visf = toTest.VisibleToFriendliesReader();
+            Func<int, bool> visf = toTest.VisibleToSquadReader();
             Assert.IsTrue(!visf(0) && !visf(1) && visf(3) && visf(4) && !visf(5) && !visf(6) && !visf(7) && !visf(2));
-            Func<int, int> friends = toTest.KnownFriendlyPresenceReader();
+            Func<int, int> friends = toTest.KnownSquadMemberPresenceReader();
             Assert.IsTrue(friends(0) == 0);                                 // Should be changed! (Compared to the original)
             Assert.IsTrue(friends(1) == 0);
             Assert.IsTrue(friends(2) == 0);

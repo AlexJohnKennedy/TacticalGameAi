@@ -380,7 +380,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
         public static void CheckTestDynamicState(DynamicState toTest) {
             // Test node data reads
-            Assert.IsTrue(toTest.GetNodeData(0).FriendlyPresence == 2);
+            Assert.IsTrue(toTest.GetNodeData(0).SquadMemberPresence == 2);
             Assert.IsTrue(toTest.GetNodeData(0).EnemyPresence == 0);
             Assert.IsTrue(toTest.GetNodeData(0).IsFriendlyArea);
             Assert.IsTrue(toTest.GetNodeData(0).IsClear);
@@ -402,7 +402,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetNodeData(3).LastKnownEnemyPosition == 0);
             Assert.IsTrue(toTest.GetNodeData(3).LastKnownFriendlyPosition == 0);
             Assert.IsTrue(!toTest.GetNodeData(4).IsControlledByEnemies);
-            Assert.IsTrue(toTest.GetNodeData(4).FriendlyPresence == 1);
+            Assert.IsTrue(toTest.GetNodeData(4).SquadMemberPresence == 1);
             Assert.IsTrue(toTest.GetNodeData(4).IsFriendlyArea);
             Assert.IsTrue(toTest.GetNodeData(5).TakingFireMagnitudeLevel == 5);
             Assert.IsTrue(toTest.GetNodeData(5).VisibleToEnemies);
@@ -415,7 +415,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetNodeData(6).LastKnownEnemyPosition == 0);
             Assert.IsTrue(!toTest.GetNodeData(7).IsControlledByTeam);
             Assert.IsTrue(toTest.GetNodeData(7).EnemyPresence == 0);
-            Assert.IsTrue(toTest.GetNodeData(7).FriendlyPresence == 0);
+            Assert.IsTrue(toTest.GetNodeData(7).SquadMemberPresence == 0);
             Assert.IsTrue(toTest.GetNodeData(1).NoKnownPresence);
             Assert.IsTrue(toTest.GetNodeData(3).NoKnownPresence);
             Assert.IsTrue(toTest.GetNodeData(7).NoKnownPresence);
@@ -423,11 +423,11 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetNodeData(9).NoKnownPresence);
             Assert.IsTrue(toTest.GetNodeData(7).PotentialEnemies);
             Assert.IsTrue(!toTest.GetNodeData(0).NoKnownPresence);
-            Assert.IsTrue(toTest.GetNodeData(0).VisibleToFriendlies);
-            Assert.IsTrue(toTest.GetNodeData(1).VisibleToFriendlies);
-            Assert.IsTrue(toTest.GetNodeData(3).VisibleToFriendlies);
-            Assert.IsTrue(toTest.GetNodeData(4).VisibleToFriendlies);
-            Assert.IsTrue(!toTest.GetNodeData(2).VisibleToFriendlies);
+            Assert.IsTrue(toTest.GetNodeData(0).VisibleToSquad);
+            Assert.IsTrue(toTest.GetNodeData(1).VisibleToSquad);
+            Assert.IsTrue(toTest.GetNodeData(3).VisibleToSquad);
+            Assert.IsTrue(toTest.GetNodeData(4).VisibleToSquad);
+            Assert.IsTrue(!toTest.GetNodeData(2).VisibleToSquad);
             Assert.IsTrue(toTest.GetNodeData(8).LastKnownEnemyPosition == 1);
             Assert.IsTrue(!toTest.GetNodeData(8).VisibleToEnemies);
             Assert.IsTrue(toTest.GetNodeData(8).PotentialEnemies);
@@ -437,9 +437,9 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(!toTest.GetNodeData(8).IsContestedArea);
 
             // Do the same tests but using the graph-subset reader functions
-            Func<int, bool> visf = toTest.VisibleToFriendliesReader();
+            Func<int, bool> visf = toTest.VisibleToSquadReader();
             Assert.IsTrue(visf(0) && visf(1) && visf(3) && visf(4) && !visf(5) && !visf(6) && !visf(7) && !visf(2)); 
-            Func<int, int> friends = toTest.KnownFriendlyPresenceReader();
+            Func<int, int> friends = toTest.KnownSquadMemberPresenceReader();
             Assert.IsTrue(friends(0) == 2);
             Assert.IsTrue(friends(1) == 0);
             Assert.IsTrue(friends(2) == 0);
