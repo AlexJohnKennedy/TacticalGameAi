@@ -25,7 +25,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             FactAdder toTest = new FactAdder(FactType.EnemyPresence, new IEffectAdder[] { });
 
             // ACT
-            toTest.AddFact(fakeWorld, NODE, VALUE, TIME, toPopulate);
+            toTest.AddFact(fakeWorld, NODE, VALUE, TIME, toPopulate, null);
 
             // ASSERT
             Assert.IsTrue(existingFact.Value == 2);    // Verify that the fact was mutated with the correct value.
@@ -45,6 +45,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             int TIME = 125;
             Mock<IEffectAdder> e1 = new Mock<IEffectAdder>();
             Mock<IEffectAdder> e2 = new Mock<IEffectAdder>();
+            IEnumerable<int> relatedNodes = new int[] { };  // To pass in.
             Fact.MutableFact existingFact = new Fact.MutableFact(FactType.EnemyPresence, 1, TIME, null);
             WorldRepresentation fakeWorld = WorldRep_ValueObjectMocker.NewWorldRepresentationMock();
             Dictionary<FactType, Fact.MutableFact> toPopulate = new Dictionary<FactType, Fact.MutableFact> { { FactType.EnemyPresence, existingFact } };   // This should become populated by the fact adder
@@ -52,7 +53,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             FactAdder toTest = new FactAdder(FactType.FriendlyPresence, new IEffectAdder[] { e1.Object, e2.Object });
 
             // ACT
-            toTest.AddFact(fakeWorld, NODE, VALUE, TIME, toPopulate);
+            toTest.AddFact(fakeWorld, NODE, VALUE, TIME, toPopulate, relatedNodes);
 
             // ASSERT
             Assert.IsTrue(existingFact.Value == 1);    // Verify that the fact was not mutated.
@@ -72,8 +73,8 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             }
 
             // verify each adder was called once, with the correct node id and world object
-            e1.Verify(e => e.AddEffects(fakeWorld, NODE, It.IsAny<Fact.MutableFact>()), Times.Once());
-            e2.Verify(e => e.AddEffects(fakeWorld, NODE, It.IsAny<Fact.MutableFact>()), Times.Once());
+            e1.Verify(e => e.AddEffects(fakeWorld, NODE, It.IsAny<Fact.MutableFact>(), relatedNodes), Times.Once());
+            e2.Verify(e => e.AddEffects(fakeWorld, NODE, It.IsAny<Fact.MutableFact>(), relatedNodes), Times.Once());
         }
 
         [Test]
