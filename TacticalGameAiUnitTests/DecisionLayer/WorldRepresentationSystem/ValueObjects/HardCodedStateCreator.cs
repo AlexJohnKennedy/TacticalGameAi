@@ -363,7 +363,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
         public static void CheckTestDynamicStateNodeSets(DynamicState toTest) {
             DynamicState.NodeSetQuery set = toTest.NodeSetQueryObject;
 
-            CollectionAssert.AreEquivalent(new int[] { 0, 4 }, set.GetFriendlyPresenceNodes());
+            CollectionAssert.AreEquivalent(new int[] { 0, 4 }, set.GetSquadMemberPresenceNodes());
             CollectionAssert.AreEquivalent(new int[] { 0, 4 }, set.GetFriendlyAreaNodes());
             CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetEnemyAreaNodes());
             CollectionAssert.AreEquivalent(new int[] { }, set.GetContestedAreaNodes());

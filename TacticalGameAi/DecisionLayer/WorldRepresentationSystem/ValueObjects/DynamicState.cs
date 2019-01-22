@@ -315,7 +315,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                 return CheckAllNodesLoop(d.HasNoKnownPresenceReader());
             }
             public IEnumerable<int> GetFriendlyAreaNodes() {
-                return FactBasedConditionLoop(d.IsFriendlyAreaReader(), FactType.FriendlyPresence);
+                return FactBasedConditionLoop(d.IsFriendlyAreaReader(), FactType.FriendlyPresence, FactType.SquadMemberPresence, FactType.MyPosition);
             }
             public IEnumerable<int> GetEnemyAreaNodes() {
                 return FactBasedConditionLoop(d.IsEnemyAreaReader(), FactType.EnemyPresence);
