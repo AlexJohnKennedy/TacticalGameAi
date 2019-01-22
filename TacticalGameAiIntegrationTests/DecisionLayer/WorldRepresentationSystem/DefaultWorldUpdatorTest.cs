@@ -44,7 +44,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             change2.Setup(c => c.GetFactsBefore()).Returns(beforeFacts);
             afterFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
                 { 4, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.FriendlyPresence, 1)} },
-                { 5, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.DangerFromUnknownSource, 5)} },
+                { 5, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.TakingFireFromUnknownSource, 5)} },
             };
             change2.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
             change3 = new Mock<IDynamicStateChange>();
@@ -77,7 +77,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             changeToRevert1.Setup(c => c.TimeLearned).Returns(timeToRevert1);
             beforeFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
                 { 0, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.FriendlyPresence, 2)} },
-                { 5, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.DangerFromUnknownSource, 5)} }
+                { 5, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.TakingFireFromUnknownSource, 5)} }
             };
             changeToRevert1.Setup(c => c.GetFactsBefore()).Returns(beforeFacts);
             afterFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
@@ -151,7 +151,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
                 if (i == 4) { Assert.IsTrue(friendlies(i) == 1); }
                 else { Assert.IsTrue(friendlies(i) == 0); }
                 if (i == 2) { Assert.IsTrue(enemies(i) == 3); }
-                else if (i == 5) { Assert.IsTrue(enemies(i) == 1); Assert.IsTrue(result.DynamicState.GetNodeData(i).DangerLevel == 0); }
+                else if (i == 5) { Assert.IsTrue(enemies(i) == 1); Assert.IsTrue(result.DynamicState.GetNodeData(i).TakingFireMagnitudeLevel == 0); }
                 else { Assert.IsTrue(enemies(i) == 0); }
             }
 
@@ -164,7 +164,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
                 if (i == 4) { Assert.IsTrue(friendlies(i) == 1); }
                 else { Assert.IsTrue(friendlies(i) == 0); }
                 if (i == 2) { Assert.IsTrue(enemies(i) == 3); }
-                else if (i == 5) { Assert.IsTrue(enemies(i) == 1); Assert.IsTrue(result.DynamicState.GetNodeData(i).DangerLevel == 0); }
+                else if (i == 5) { Assert.IsTrue(enemies(i) == 1); Assert.IsTrue(result.DynamicState.GetNodeData(i).TakingFireMagnitudeLevel == 0); }
                 else { Assert.IsTrue(enemies(i) == 0); }
             }
 

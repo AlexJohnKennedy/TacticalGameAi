@@ -37,12 +37,12 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                     }
                 )
             );
-            factAdderDict.Add(FactType.Danger, new FactAdder(FactType.Danger,
+            factAdderDict.Add(FactType.TakingFire, new FactAdder(FactType.TakingFire,
                     new IEffectAdder[] {
                     }
                 )
             );
-            factAdderDict.Add(FactType.DangerFromUnknownSource, new FactAdder(FactType.DangerFromUnknownSource,
+            factAdderDict.Add(FactType.TakingFireFromUnknownSource, new FactAdder(FactType.TakingFireFromUnknownSource,
                     new IEffectAdder[] {
                         new CanBeSeenByBasedEffectAdder(EffectType.PotentialEnemies)
                     }

@@ -57,7 +57,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
 
             // Node seven new facts -- we now have one fact (the new one!). It previously had none.
             // The 'new' fact is a 'Danger' Fact, with a danger level of 4 (value = 4). Danger facttypes currently cause no effects, so an empty effect list is passed to the Fact.
-            Dictionary<FactType, Fact> nodeSeven = new Dictionary<FactType, Fact> { { FactType.Danger, new Fact(FactType.Danger, 4, defaultTime,  new List<Effect>()) } };
+            Dictionary<FactType, Fact> nodeSeven = new Dictionary<FactType, Fact> { { FactType.TakingFire, new Fact(FactType.TakingFire, 4, defaultTime,  new List<Effect>()) } };
             changes.Add(7, nodeSeven);
 
             return changes;
@@ -86,7 +86,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(!toTest.GetNodeData(4).IsControlledByEnemies);
             Assert.IsTrue(toTest.GetNodeData(4).FriendlyPresence == 1);
             Assert.IsTrue(toTest.GetNodeData(4).IsFriendlyArea);
-            Assert.IsTrue(toTest.GetNodeData(5).DangerLevel == 5);
+            Assert.IsTrue(toTest.GetNodeData(5).TakingFireMagnitudeLevel == 5);
             Assert.IsTrue(toTest.GetNodeData(5).VisibleToEnemies);
             Assert.IsTrue(toTest.GetNodeData(5).PotentialEnemies);
             Assert.IsTrue(toTest.GetNodeData(5).IsClear == false);
@@ -96,7 +96,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(!toTest.GetNodeData(7).IsControlledByTeam);
             Assert.IsTrue(toTest.GetNodeData(7).EnemyPresence == 0);
             Assert.IsTrue(toTest.GetNodeData(7).FriendlyPresence == 0);
-            Assert.IsTrue(toTest.GetNodeData(7).DangerLevel == 4);          // Testing the new Danger fact on node seven!
+            Assert.IsTrue(toTest.GetNodeData(7).TakingFireMagnitudeLevel == 4);          // Testing the new Danger fact on node seven!
 
             Assert.IsTrue(!toTest.GetNodeData(0).VisibleToFriendlies);
             Assert.IsTrue(!toTest.GetNodeData(1).VisibleToFriendlies);
@@ -119,7 +119,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(potentials(6) && potentials(1) && potentials(7) && !potentials(2) && potentials(5) && potentials(8));     // Node 1 should now have potential enemies
             Func<int, bool> vis = toTest.VisibleToEnemiesReader();
             Assert.IsTrue(vis(1) && vis(2) && !vis(3) && !vis(0) && !vis(7));
-            Func<int, int> danger = toTest.KnownDangerLevelReader();
+            Func<int, int> danger = toTest.TakingFireMagnitudeLevelReader();
             Assert.IsTrue(danger(7) == 4 && danger(5) == 5 && danger(2) == 0 && danger(3) == 0);
 
             // Test edges
@@ -157,12 +157,12 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
                 Assert.DoesNotThrow(() => empty.IsEnemyAreaReader()(i));
                 Assert.DoesNotThrow(() => empty.IsControlledByTeamReader()(i));
                 Assert.DoesNotThrow(() => empty.IsContestedAreaReader()(i));
-                Assert.DoesNotThrow(() => empty.KnownDangerLevelReader()(i));
+                Assert.DoesNotThrow(() => empty.TakingFireMagnitudeLevelReader()(i));
 
                 DynamicState.AreaNode n;
                 Assert.DoesNotThrow(() => empty.GetNodeData(i));
                 n = empty.GetNodeData(i);
-                Assert.DoesNotThrow(() => { int d = n.DangerLevel; });
+                Assert.DoesNotThrow(() => { int d = n.TakingFireMagnitudeLevel; });
                 Assert.DoesNotThrow(() => { bool b = n.IsControlledByTeam; });
 
                 Assert.DoesNotThrow(() => { Dictionary<FactType, Fact> f = DynamicStateInternalReader.GetNodeFact(i, empty); });

@@ -303,15 +303,15 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             var facts = new Dictionary<FactType, Fact>[numNodes];
 
             // Set up the effects that each fact is causing.
-            // Node 0 causes 'clear' / 'visibleToFriendlies' on node 1 and 3, and 'control' on 3
+            // Node 0 causes 'clear' / 'visibleToSquad' on node 1 and 3, and 'control' on 3
             List<Effect> e = new List<Effect> {
                 new Effect(EffectType.Clear, 0 ,1, 0),
                 new Effect(EffectType.Clear, 0, 3, 0),
-                new Effect(EffectType.VisibleToFriendlies, 0 ,1, 0),
-                new Effect(EffectType.VisibleToFriendlies, 0, 3, 0),
+                new Effect(EffectType.VisibleToSquad, 0 ,1, 0),
+                new Effect(EffectType.VisibleToSquad, 0, 3, 0),
                 new Effect(EffectType.Controlled, 0, 3, 0)
             };
-            facts[0] = new Dictionary<FactType, Fact> { { FactType.FriendlyPresence, new Fact(FactType.FriendlyPresence, 2, defaultTime, e) } };
+            facts[0] = new Dictionary<FactType, Fact> { { FactType.SquadMemberPresence, new Fact(FactType.SquadMemberPresence, 2, defaultTime, e) } };
 
             // Node 1 has no facts
             facts[1] = new Dictionary<FactType, Fact> { };
@@ -329,16 +329,16 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             // Node 4 causes 'clear' on node 3, and visibleToFriendlies on node 3
             e = new List<Effect> {
                 new Effect(EffectType.Clear, 0, 3, 4),
-                new Effect(EffectType.VisibleToFriendlies, 0, 3, 4),
+                new Effect(EffectType.VisibleToSquad, 0, 3, 4),
             };
-            facts[4] = new Dictionary<FactType, Fact> { { FactType.FriendlyPresence, new Fact(FactType.FriendlyPresence, 1, defaultTime, e) } };
+            facts[4] = new Dictionary<FactType, Fact> { { FactType.SquadMemberPresence, new Fact(FactType.SquadMemberPresence, 1, defaultTime, e) } };
 
             // Node 5 causes 'potential enemies' on node 1 and 6
             e = new List<Effect> {
                 new Effect(EffectType.PotentialEnemies, 0, 1, 5),
                 new Effect(EffectType.PotentialEnemies, 0, 6, 5)
             };
-            facts[5] = new Dictionary<FactType, Fact> { { FactType.DangerFromUnknownSource, new Fact(FactType.DangerFromUnknownSource, 5, defaultTime, e) } };
+            facts[5] = new Dictionary<FactType, Fact> { { FactType.TakingFireFromUnknownSource, new Fact(FactType.TakingFireFromUnknownSource, 5, defaultTime, e) } };
 
             // Node 6 has LastKnownFriendlyPosition with value 2, and causes no Effects
             e = new List<Effect> { };
@@ -367,7 +367,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             CollectionAssert.AreEquivalent(new int[] { 0, 4 }, set.GetFriendlyAreaNodes());
             CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetEnemyAreaNodes());
             CollectionAssert.AreEquivalent(new int[] { }, set.GetContestedAreaNodes());
-            CollectionAssert.AreEquivalent(new int[] { 5 }, set.GetDangerFromUnknownSourceNodes());
+            CollectionAssert.AreEquivalent(new int[] { 5 }, set.GetNodesTakingFireFromUnknownSource());
             CollectionAssert.AreEquivalent(new int[] { 0, 1, 3, 4 }, set.GetClearNodes());
             CollectionAssert.AreEquivalent(new int[] { 2, 1, 5 }, set.GetVisibleToEnemiesNodes());
             CollectionAssert.AreEquivalent(new int[] { 5, 6, 7, 8 }, set.GetPotentialEnemiesNodes());
@@ -375,7 +375,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetControlledByEnemiesNodes());
             CollectionAssert.AreEquivalent(new int[] { 1, 3, 5, 6, 7, 8, 9 }, set.GetNoKnownPresenceNodes());
             CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetEnemyPresenceNodes());
-            CollectionAssert.AreEquivalent(new int[] { }, set.GetDangerNodes());
+            CollectionAssert.AreEquivalent(new int[] { }, set.GetNodesTakingFireFromKnownSource());
         }
 
         public static void CheckTestDynamicState(DynamicState toTest) {
@@ -404,7 +404,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(!toTest.GetNodeData(4).IsControlledByEnemies);
             Assert.IsTrue(toTest.GetNodeData(4).FriendlyPresence == 1);
             Assert.IsTrue(toTest.GetNodeData(4).IsFriendlyArea);
-            Assert.IsTrue(toTest.GetNodeData(5).DangerLevel == 5);
+            Assert.IsTrue(toTest.GetNodeData(5).TakingFireMagnitudeLevel == 5);
             Assert.IsTrue(toTest.GetNodeData(5).VisibleToEnemies);
             Assert.IsTrue(toTest.GetNodeData(5).PotentialEnemies);
             Assert.IsTrue(toTest.GetNodeData(5).IsClear == false);
