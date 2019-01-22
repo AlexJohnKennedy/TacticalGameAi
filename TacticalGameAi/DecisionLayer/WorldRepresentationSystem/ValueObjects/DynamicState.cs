@@ -575,7 +575,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             }
             public bool IsCausingVisibleToMeEffect {
                 get {
-                    if (isCausingVisibleToSquadEffect == null) isCausingVisibleToSquadEffect = d.CausingVisibleToMeEffectReader()(FromNodeId, ToNodeId);
+                    if (isCausingVisibleToMeEffect == null) isCausingVisibleToMeEffect = d.CausingVisibleToMeEffectReader()(FromNodeId, ToNodeId);
                     return isCausingVisibleToMeEffect.Value;
                 }
             }
@@ -704,8 +704,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
 
             effectsIncludedByFactTable = new HashSet<EffectType>[Enum.GetNames(typeof(FactType)).Length];    // Number of FactTypes
             effectsIncludedByFactTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.VisibleToFriendlies });
-            effectsIncludedByFactTable[(int)FactType.SquadMemberPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.VisibleToSquad });
-            effectsIncludedByFactTable[(int)FactType.MyPosition] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.VisibleToSquad, EffectType.VisibleToMe });
+            effectsIncludedByFactTable[(int)FactType.SquadMemberPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.VisibleToSquad, EffectType.VisibleToFriendlies });
+            effectsIncludedByFactTable[(int)FactType.MyPosition] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.VisibleToSquad, EffectType.VisibleToMe, EffectType.VisibleToFriendlies });
             effectsIncludedByFactTable[(int)FactType.EnemyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.VisibleToEnemies });
             effectsIncludedByFactTable[(int)FactType.TakingFire] = new HashSet<EffectType>(new EffectType[] { });
             effectsIncludedByFactTable[(int)FactType.TakingFireFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies });
@@ -738,7 +738,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
             factsWhichIncludeTable[(int)EffectType.Clear] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition });
             factsWhichIncludeTable[(int)EffectType.Controlled] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition });
             factsWhichIncludeTable[(int)EffectType.VisibleToEnemies] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
-            factsWhichIncludeTable[(int)EffectType.VisibleToFriendlies] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence });
+            factsWhichIncludeTable[(int)EffectType.VisibleToFriendlies] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence , FactType.MyPosition, FactType.SquadMemberPresence });
             factsWhichIncludeTable[(int)EffectType.ControlledByEnemy] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
             factsWhichIncludeTable[(int)EffectType.VisibleToSquad] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition });
             factsWhichIncludeTable[(int)EffectType.VisibleToMe] = new HashSet<FactType>(new FactType[] { FactType.MyPosition });

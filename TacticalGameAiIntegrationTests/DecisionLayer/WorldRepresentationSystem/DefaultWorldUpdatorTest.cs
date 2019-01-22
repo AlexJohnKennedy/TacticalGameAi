@@ -31,7 +31,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             };
             change1.Setup(c => c.GetFactsBefore()).Returns(beforeFacts);
             Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> afterFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
-                { 0, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.FriendlyPresence, 2)} },
+                { 0, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.SquadMemberPresence, 2)} },
             };
             change1.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
             change2 = new Mock<IDynamicStateChange>();
@@ -43,7 +43,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             };
             change2.Setup(c => c.GetFactsBefore()).Returns(beforeFacts);
             afterFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
-                { 4, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.FriendlyPresence, 1)} },
+                { 4, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.SquadMemberPresence, 1)} },
                 { 5, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.TakingFireFromUnknownSource, 5)} },
             };
             change2.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
@@ -76,7 +76,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             changeToRevert1.Setup(c => c.AffectedNodes).Returns(new int[] { 0, 5 });
             changeToRevert1.Setup(c => c.TimeLearned).Returns(timeToRevert1);
             beforeFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
-                { 0, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.FriendlyPresence, 2)} },
+                { 0, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.SquadMemberPresence, 2)} },
                 { 5, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.TakingFireFromUnknownSource, 5)} }
             };
             changeToRevert1.Setup(c => c.GetFactsBefore()).Returns(beforeFacts);
@@ -145,7 +145,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             WorldRepresentation result = worldUpdator.ApplyDynamicStateChangesSequentially(originalWorld, change1.Object, change2.Object, change3.Object, change4.Object, changeToRevert1.Object);
 
             // Simple assertions to see if the 'change to revert' event worked correctly..
-            Func<int, int> friendlies = result.DynamicState.KnownFriendlyPresenceReader();
+            Func<int, int> friendlies = result.DynamicState.KnownSquadMemberPresenceReader();
             Func<int, int> enemies = result.DynamicState.KnownEnemyPresenceReader();
             for (int i=0; i < result.NumberOfNodes; i++) {
                 if (i == 4) { Assert.IsTrue(friendlies(i) == 1); }
@@ -158,7 +158,7 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             // Apply again, but in a different order. Any order should be valid so long as Change1 preceeds changeToRevert1. (since changetorevert1 removes a fact added by change1).
             WorldRepresentation result2 = worldUpdator.ApplyDynamicStateChangesSequentially(originalWorld, change4.Object, change1.Object, changeToRevert1.Object, change3.Object, change2.Object);
 
-            friendlies = result2.DynamicState.KnownFriendlyPresenceReader();
+            friendlies = result2.DynamicState.KnownSquadMemberPresenceReader();
             enemies = result2.DynamicState.KnownEnemyPresenceReader();
             for (int i = 0; i < result.NumberOfNodes; i++) {
                 if (i == 4) { Assert.IsTrue(friendlies(i) == 1); }
