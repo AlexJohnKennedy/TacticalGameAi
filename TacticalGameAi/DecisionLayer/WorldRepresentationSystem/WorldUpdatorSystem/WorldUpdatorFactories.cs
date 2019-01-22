@@ -56,7 +56,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             );
             factAdderDict.Add(FactType.TakingFire, new FactAdder(FactType.TakingFire,
                     new IEffectAdder[] {
-                        // TODO ADD SOURCE OF ENEMY FIRE OBJECTS
+                        new SimpleRelatedNodesEffectAdder(EffectType.SourceOfEnemyFire)
                     }
                 )
             );
