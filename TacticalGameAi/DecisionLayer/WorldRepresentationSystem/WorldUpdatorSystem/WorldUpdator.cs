@@ -70,27 +70,25 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             return new WorldRepresentation(world.StaticState, new DynamicState(world.DynamicState, immutableCast));
         }
 
-        private void Remove(Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> factsToRemove, Dictionary<int, Dictionary<FactType, Fact.MutableFact>> nodeFactData, WorldRepresentation world) {
+        private void Remove(Dictionary<int, IEnumerable<ValueTuple<FactType, int, IEnumerable<int>>>> factsToRemove, Dictionary<int, Dictionary<FactType, Fact.MutableFact>> nodeFactData, WorldRepresentation world) {
             // Cycle each node to have something removed
             foreach(var n in factsToRemove) {
                 // n.Key   == NodeId
                 // n.Value == Enumerable list of fact types and their associated values, to be removed.
-                foreach(var f in n.Value) {
-                    FactType typeToBeRemoved = f.Key;
+                foreach((FactType typeToBeRemoved, int factVal, IEnumerable<int> relatedNodes) in n.Value) {
                     // Use our mapped adder logic to remove this fact!
                     adderLogic[typeToBeRemoved].RemoveFact(world, n.Key, nodeFactData[n.Key]);
                 }
             }
         }
-        private void Add(Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> factsToAdd, Dictionary<int, Dictionary<FactType, Fact.MutableFact>> nodeFactData, int timeLearned, WorldRepresentation world) {
+        private void Add(Dictionary<int, IEnumerable<ValueTuple<FactType, int, IEnumerable<int>>>> factsToAdd, Dictionary<int, Dictionary<FactType, Fact.MutableFact>> nodeFactData, int timeLearned, WorldRepresentation world) {
             // Cycle each node to have something removed
             foreach (var n in factsToAdd) {
                 // n.Key   == NodeId
-                // n.Value == Enumerable list of fact types and their associated values, to be added.
-                foreach (var f in n.Value) {
+                // n.Value == Enumerable list of fact types and their associated values and their related nodes, to be added.
+                foreach ((FactType typeToBeAdded, int factVal, IEnumerable<int> relatedNodes) in n.Value) {
                     // Use our mapped adder logic to add this fact!
-                    FactType typeToBeAdded = f.Key;
-                    adderLogic[typeToBeAdded].AddFact(world, n.Key, f.Value, timeLearned, nodeFactData[n.Key]);
+                    adderLogic[typeToBeAdded].AddFact(world, n.Key, factVal, timeLearned, nodeFactData[n.Key], relatedNodes);
                 }
             }
         }
@@ -99,13 +97,15 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
     // Interface for some object which encapsulates a Dynamic State Data change as a result of some event (Perception)
     /* IMPLEMENTATION REQUIREMENT: AffectedNodes == GetFactsAfter.Keys == GetGactsBefore.Keys | (They must all refer to the same set of nodes) */
     public interface IDynamicStateChange {
-        // (nodeid , (factTypes and corresponding value)). Note the the set of facts here DO NOT necessarilly contain ALL the facts of a given node after this
+        // (nodeid , (factType, corresponding value, list of 'related' nodes which the EffectAdder might need)). Note the the set of facts here DO NOT necessarilly contain ALL the facts of a given node after this
         // change. It only contains the facts which should be 'added'. Conversely, the 'before' facts only contain the previously existing facts which are
         // removed or changed by this StateChange event.
-        Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> GetFactsAfter();      // Set of NEW facts and values to be added to each respective node.
-        Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> GetFactsBefore();     // Set of OLD facts and values which are changed/removed by this change, for each respective ndoe.
+
+        // Dict < 'node to apply to', IEnumerable< (FactType to apply, value of fact to apply, IEnumerable<'related nodes'>) > >
+        Dictionary<int, IEnumerable<(FactType, int, IEnumerable<int>)>> GetFactsAfter();      // Set of NEW facts and values to be added to each respective node.
+        Dictionary<int, IEnumerable<(FactType, int, IEnumerable<int>)>> GetFactsBefore();     // Set of OLD facts and values which are changed/removed by this change, for each respective ndoe.
         IEnumerable<int> AffectedNodes { get; }
-        int TimeLearned { get; }                                                        // A Timestamp in gametime which tells us when the a unit was made aware of these fact changes.
+        int TimeLearned { get; }                                                              // A Timestamp in gametime which tells us when the a unit was made aware of these fact changes.
     }
 
 }

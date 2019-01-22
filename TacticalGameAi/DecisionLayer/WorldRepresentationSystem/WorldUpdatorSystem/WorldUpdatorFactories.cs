@@ -24,8 +24,25 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             // Construct a FactAdder for each FactType, and create the appropriate EffectAdders for each FactAdder.
             factAdderDict.Add(FactType.FriendlyPresence, new FactAdder(FactType.FriendlyPresence,
                     new IEffectAdder[] {
+                        new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToFriendlies)
+                    }
+                )
+            );
+            factAdderDict.Add(FactType.SquadMemberPresence, new FactAdder(FactType.SquadMemberPresence,
+                    new IEffectAdder[] {
                         new FullVisibilityBasedEffectAdder(EffectType.Clear),
                         new ControlBasedEffectAdder(EffectType.Controlled),
+                        new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToSquad),
+                        new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToFriendlies)
+                    }
+                )
+            );
+            factAdderDict.Add(FactType.MyPosition, new FactAdder(FactType.MyPosition,
+                    new IEffectAdder[] {
+                        new FullVisibilityBasedEffectAdder(EffectType.Clear),
+                        new ControlBasedEffectAdder(EffectType.Controlled),
+                        new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToSquad),
+                        new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToMe),
                         new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToFriendlies)
                     }
                 )
@@ -37,12 +54,13 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                     }
                 )
             );
-            factAdderDict.Add(FactType.Danger, new FactAdder(FactType.Danger,
+            factAdderDict.Add(FactType.TakingFire, new FactAdder(FactType.TakingFire,
                     new IEffectAdder[] {
+                        new SimpleRelatedNodesEffectAdder(EffectType.SourceOfEnemyFire)
                     }
                 )
             );
-            factAdderDict.Add(FactType.DangerFromUnknownSource, new FactAdder(FactType.DangerFromUnknownSource,
+            factAdderDict.Add(FactType.TakingFireFromUnknownSource, new FactAdder(FactType.TakingFireFromUnknownSource,
                     new IEffectAdder[] {
                         new CanBeSeenByBasedEffectAdder(EffectType.PotentialEnemies)
                     }

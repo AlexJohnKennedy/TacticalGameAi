@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHiddenTypes;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSystem {
     
     public interface IFactAdder {
-        void AddFact(WorldRepresentation world, int node, int value, int timeLearned, Dictionary<FactType, Fact.MutableFact> nodeFacts);
+        void AddFact(WorldRepresentation world, int node, int value, int timeLearned, Dictionary<FactType, Fact.MutableFact> nodeFacts, IEnumerable<int> relatedNodes);
         void RemoveFact(WorldRepresentation world, int node, Dictionary<FactType, Fact.MutableFact> nodeFactsToModify);
     }
     
@@ -24,7 +23,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
         }
 
         // Public Interface.
-        public void AddFact(WorldRepresentation world, int node, int value, int timeLearned, Dictionary<FactType, Fact.MutableFact> nodeFacts) {
+        public void AddFact(WorldRepresentation world, int node, int value, int timeLearned, Dictionary<FactType, Fact.MutableFact> nodeFacts, IEnumerable<int> relatedNodes) {
             if (nodeFacts.ContainsKey(factType)) {
                 // Modify existing fact object's value, and that's it! The relevant effects should already exist, because the fact already exists.
                 nodeFacts[factType].SetValue(value);
@@ -35,7 +34,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                 Fact.MutableFact f = new Fact.MutableFact(factType, value, timeLearned, new List<Effect>());
                 // Delegate Effect adding logic to all our IEffectAdder objects. We don't care!
                 foreach (IEffectAdder adder in effectAdders) {
-                    adder.AddEffects(world, node, f);
+                    adder.AddEffects(world, node, f, relatedNodes);
                 }
                 nodeFacts.Add(factType, f);
             }
@@ -48,6 +47,6 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
     }
 
     public interface IEffectAdder {
-        void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject);
+        void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject, IEnumerable<int> relatedNodes);
     }
 }

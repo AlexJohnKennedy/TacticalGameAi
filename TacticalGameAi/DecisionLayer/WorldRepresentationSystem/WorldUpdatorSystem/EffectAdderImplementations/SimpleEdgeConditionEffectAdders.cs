@@ -7,6 +7,7 @@ using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSystem.EffectAdderImplementations {
 
     // Strategy for adding an effect to directly adjacent nodes based on some edge condition. Re-used among all of the simple effect adder logic implementations.
+    // Note that these simple implementations only care about examining the StaticState edges, and ignore the 'related nodes' field in their logic!
     internal static class SingleEdgeBasedEffectAdder {
         internal static void AddEffects(int factNode, int value, int numNodes, Fact.MutableFact factObject, Func<int, int, bool> edgeCondition, EffectType effectType) {
             // Add our effect type to all nodes that are visible from the fact node.
@@ -25,7 +26,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             this.effectType = effectType;
         }
 
-        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
+        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject, IEnumerable<int> relatedNodes) {
             SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, world.StaticState.IsTraversableReader(), effectType);
         }
     }
@@ -37,7 +38,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             this.effectType = effectType;
         }
 
-        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
+        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject, IEnumerable<int> relatedNodes) {
             SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, world.StaticState.HasControlOverReader(), effectType);
         }
     }
@@ -49,7 +50,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             this.effectType = effectType;
         }
 
-        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
+        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject, IEnumerable<int> relatedNodes) {
             SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, world.StaticState.FullVisibilityReader(), effectType);
         }
     }
@@ -61,7 +62,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             this.effectType = effectType;
         }
 
-        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
+        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject, IEnumerable<int> relatedNodes) {
             SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, (from, to) => world.StaticState.TravelVisibilityReader()(from, to) || world.StaticState.FullVisibilityReader()(from, to), effectType);
         }
     }
@@ -73,7 +74,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
             this.effectType = effectType;
         }
 
-        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject) {
+        public void AddEffects(WorldRepresentation world, int factNode, Fact.MutableFact factObject, IEnumerable<int> relatedNodes) {
             SingleEdgeBasedEffectAdder.AddEffects(factNode, 1, world.NumberOfNodes, factObject, (from, to) => world.StaticState.FullVisibilityReader()(to, from), effectType);
         }
     }

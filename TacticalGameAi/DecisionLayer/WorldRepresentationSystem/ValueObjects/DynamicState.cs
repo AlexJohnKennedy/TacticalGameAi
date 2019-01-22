@@ -27,11 +27,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
         // Public Interface - Directly get all Vertex and Edge data
         public AreaNode GetNodeData(int nodeId) {
-            if (areaNodes[nodeId] == null) areaNodes[nodeId] = new AreaNode(nodeId, KnownFriendlyPresenceReader(), KnownEnemyPresenceReader(), KnownDangerLevelReader(), HasDangerFromUnknownSourceReader(), HasNoKnownPresenceReader(), IsFriendlyAreaReader(), IsEnemyAreaReader(), IsContestedAreaReader(), IsClearReader(), IsControlledByTeamReader(), IsControlledByEnemiesReader(), VisibleToEnemiesReader(), PotentialEnemiesReader(), VisibleToFriendliesReader(), LastKnownEnemyPositionReader(), LastKnownFriendlyPositionReader());
+            if (areaNodes[nodeId] == null) areaNodes[nodeId] = new AreaNode(nodeId, this);
             return areaNodes[nodeId];
         }
         public AreaEdge GetEdge(int fromNode, int toNode) {
-            if (areaEdges[fromNode, toNode] == null) areaEdges[fromNode, toNode] = new AreaEdge(fromNode, toNode, CausingClearEffectReader(), CausingControlledByTeamEffectReader(), CausingControlledByEnemiesEffectReader(), CausingVisibleToEnemiesEffectReader(), CausingPotentialEnemiesEffectReader(), CausingVisibleToFriendliesEffectReader());
+            if (areaEdges[fromNode, toNode] == null) areaEdges[fromNode, toNode] = new AreaEdge(fromNode, toNode, this);
             return areaEdges[fromNode, toNode];
         }
         public NodeSetQuery NodeSetQueryObject { get { return nodeSetQueryObject; } }
@@ -70,7 +70,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
                     }
                 }
             }
-            nodeSetQueryObject = new NodeSetQuery(facts.Length, nodesWithFactsPresent, nodesWithEffectsPresent, KnownFriendlyPresenceReader(), KnownEnemyPresenceReader(), KnownDangerLevelReader(), HasDangerFromUnknownSourceReader(), HasNoKnownPresenceReader(), IsFriendlyAreaReader(), IsEnemyAreaReader(), IsContestedAreaReader(), IsClearReader(), IsControlledByTeamReader(), IsControlledByEnemiesReader(), VisibleToEnemiesReader(), PotentialEnemiesReader(), VisibleToFriendliesReader(), LastKnownEnemyPositionReader(), LastKnownFriendlyPositionReader());
+            nodeSetQueryObject = new NodeSetQuery(facts.Length, nodesWithFactsPresent, nodesWithEffectsPresent, this);
         }
         private void AddEffectToEffectSum(int node, Effect e) {
             if (areaEffectSums[node].ContainsKey(e.EffectType)) {
@@ -125,30 +125,43 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         private Func<int, bool> FactTruthReaderFunction(FactType type) {
             return n => areaFacts[n].ContainsKey(type);
         }
+        private Func<int, bool> FactTruthReaderFunction(params FactType[] types) {
+            return n => {
+                foreach (FactType t in types) {
+                    if (areaFacts[n].ContainsKey(t)) return true;
+                }
+                return false;
+            };
+        }
         public Func<int, int> KnownEnemyPresenceReader() {
             return FactValueReaderFunction(FactType.EnemyPresence);
         }
         public Func<int, int> KnownFriendlyPresenceReader() {
             return FactValueReaderFunction(FactType.FriendlyPresence);
         }
-        public Func<int, int> KnownDangerLevelReader() {
-            // Danger levels are reported as the sum of all Facts which signal 'danger'.
-            return n => FactValueReaderFunction(FactType.Danger)(n) + FactValueReaderFunction(FactType.DangerFromUnknownSource)(n);
+        public Func<int, int> KnownSquadMemberPresenceReader() {
+            return FactValueReaderFunction(FactType.SquadMemberPresence);
         }
-        public Func<int, bool> HasDangerFromUnknownSourceReader() {
-            return FactTruthReaderFunction(FactType.DangerFromUnknownSource);
+        public Func<int, int> TakingFireMagnitudeLevelReader() {
+            return n => FactValueReaderFunction(FactType.TakingFire)(n) + FactValueReaderFunction(FactType.TakingFireFromUnknownSource)(n);
+        }
+        public Func<int, bool> IsMyPositionReader() {
+            return FactTruthReaderFunction(FactType.MyPosition);
+        }
+        public Func<int, bool> TakingFireFromUnknownSourceReader() {
+            return FactTruthReaderFunction(FactType.TakingFireFromUnknownSource);
         }
         public Func<int, bool> HasNoKnownPresenceReader() {
-            return n => !FactTruthReaderFunction(FactType.FriendlyPresence)(n) && !FactTruthReaderFunction(FactType.EnemyPresence)(n);
+            return n => !FactTruthReaderFunction(FactType.FriendlyPresence, FactType.EnemyPresence, FactType.SquadMemberPresence, FactType.MyPosition)(n);
         }
         public Func<int, bool> IsFriendlyAreaReader() {
-            return n => FactTruthReaderFunction(FactType.FriendlyPresence)(n) && !FactTruthReaderFunction(FactType.EnemyPresence)(n);
+            return n => FactTruthReaderFunction(FactType.FriendlyPresence, FactType.MyPosition, FactType.SquadMemberPresence)(n) && !FactTruthReaderFunction(FactType.EnemyPresence)(n);
         }
         public Func<int, bool> IsEnemyAreaReader() {
-            return n => !FactTruthReaderFunction(FactType.FriendlyPresence)(n) && FactTruthReaderFunction(FactType.EnemyPresence)(n);
+            return n => !FactTruthReaderFunction(FactType.FriendlyPresence, FactType.MyPosition, FactType.SquadMemberPresence)(n) && FactTruthReaderFunction(FactType.EnemyPresence)(n);
         }
         public Func<int, bool> IsContestedAreaReader() {
-            return n => FactTruthReaderFunction(FactType.FriendlyPresence)(n) && FactTruthReaderFunction(FactType.EnemyPresence)(n);
+            return n => FactTruthReaderFunction(FactType.FriendlyPresence, FactType.MyPosition, FactType.SquadMemberPresence)(n) && FactTruthReaderFunction(FactType.EnemyPresence)(n);
         }
         public Func<int, int> LastKnownEnemyPositionReader() {
             return FactValueReaderFunction(FactType.LastKnownEnemyPosition);
@@ -193,6 +206,15 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         public Func<int, bool> VisibleToFriendliesReader() {
             return EffectTruthReaderFunction(EffectType.VisibleToFriendlies);
         }
+        public Func<int, bool> VisibleToSquadReader() {
+            return EffectTruthReaderFunction(EffectType.VisibleToSquad);
+        }
+        public Func<int, bool> VisibleToMeReader() {
+            return EffectTruthReaderFunction(EffectType.VisibleToMe);
+        }
+        public Func<int, bool> SourceOfEnemyFireReader() {
+            return EffectTruthReaderFunction(EffectType.SourceOfEnemyFire);
+        }
 
         private Func<int, int, bool> EdgeDataReaderFunction(EffectType type) {
             return (from, to) => {
@@ -221,101 +243,99 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         public Func<int, int, bool> CausingVisibleToFriendliesEffectReader() {
             return EdgeDataReaderFunction(EffectType.VisibleToFriendlies);
         }
-        
+        public Func<int, int, bool> CausingVisibleToSquadEffectReader() {
+            return EdgeDataReaderFunction(EffectType.VisibleToSquad);
+        }
+        public Func<int, int, bool> CausingVisibleToMeEffectReader() {
+            return EdgeDataReaderFunction(EffectType.VisibleToMe);
+        }
+        public Func<int, int, bool> CausingSourceOfFireEffectReader() {
+            return EdgeDataReaderFunction(EffectType.SourceOfEnemyFire);
+        }
+        public Func<int, int, bool> CausingTakingFireEffectReader() {
+            return (from, to) => EdgeDataReaderFunction(EffectType.SourceOfEnemyFire)(to, from);
+        }
+
         public class NodeSetQuery {
             private Dictionary<FactType, HashSet<int>> nodesWithFactsPresent;       // Tracks which nodes have which facts present, for faster 'reverse' querying.
             private Dictionary<EffectType, HashSet<int>> nodesWithEffectsPresent;   // Tracks which nodes have which effects present, for faster 'reverse' querying.
 
             private int numNodes;
 
-            private Func<int, int> friendlyPresenceReader;
-            private Func<int, int> enemyPresenceReader;
-            private Func<int, int> dangerLevelReader;
-            private Func<int, bool> hasDangerFromUnknownSourceReader;
-            private Func<int, bool> noKnownPresenceReader;
-            private Func<int, bool> isFriendlyAreaReader;
-            private Func<int, bool> isEnemyAreaReader;
-            private Func<int, bool> isContestedAreaReader;
-            private Func<int, bool> isClearReader;
-            private Func<int, bool> isControlledByTeamReader;
-            private Func<int, bool> isControlledByEnemiesReader;
-            private Func<int, bool> visibleToEnemiesReader;
-            private Func<int, bool> potentialEnemiesReader;
+            private DynamicState d;
 
-            private Func<int, bool> visibleToFriendliesReader;
-            private Func<int, int> lastKnownEnemyPositionReader;
-            private Func<int, int> lastKnownFriendlyPositionReader;
-
-            public NodeSetQuery(int numNodes, Dictionary<FactType, HashSet<int>> nodesWithFactsPresent, Dictionary<EffectType, HashSet<int>> nodesWithEffectsPresent, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> noKnownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader, Func<int, bool> visibleToFriendliesReader, Func<int, int> lastKnownEnemyPositionReader, Func<int, int> lastKnownFriendlyPositionReader) {
+            public NodeSetQuery(int numNodes, Dictionary<FactType, HashSet<int>> nodesWithFactsPresent, Dictionary<EffectType, HashSet<int>> nodesWithEffectsPresent, DynamicState parent) {
                 this.numNodes = numNodes;
                 this.nodesWithFactsPresent = nodesWithFactsPresent;
                 this.nodesWithEffectsPresent = nodesWithEffectsPresent;
-                this.friendlyPresenceReader = friendlyPresenceReader;
-                this.enemyPresenceReader = enemyPresenceReader;
-                this.dangerLevelReader = dangerLevelReader;
-                this.hasDangerFromUnknownSourceReader = hasDangerFromUnknownSourceReader;
-                this.noKnownPresenceReader = noKnownPresenceReader;
-                this.isFriendlyAreaReader = isFriendlyAreaReader;
-                this.isEnemyAreaReader = isEnemyAreaReader;
-                this.isContestedAreaReader = isContestedAreaReader;
-                this.isClearReader = isClearReader;
-                this.isControlledByTeamReader = isControlledByTeamReader;
-                this.isControlledByEnemiesReader = isControlledByEnemiesReader;
-                this.visibleToEnemiesReader = visibleToEnemiesReader;
-                this.potentialEnemiesReader = potentialEnemiesReader;
-
-                this.visibleToFriendliesReader = visibleToFriendliesReader;
-                this.lastKnownEnemyPositionReader = lastKnownEnemyPositionReader;
-                this.lastKnownFriendlyPositionReader = lastKnownFriendlyPositionReader;
+                this.d = parent;
             }
 
+            public IEnumerable<int> GetSourceOfEnemyFireNodes() {
+                return EffectBasedConditionLoop(d.SourceOfEnemyFireReader(), EffectType.SourceOfEnemyFire);
+            }
             public IEnumerable<int> GetVisibleToFriendliesNodes() {
-                return EffectBasedConditionLoop(visibleToFriendliesReader, EffectType.VisibleToFriendlies);
+                return EffectBasedConditionLoop(d.VisibleToFriendliesReader(), EffectType.VisibleToFriendlies);
+            }
+            public IEnumerable<int> GetVisibleToSquadNodes() {
+                return EffectBasedConditionLoop(d.VisibleToSquadReader(), EffectType.VisibleToSquad);
+            }
+            public IEnumerable<int> GetVisibleToMeNodes() {
+                return EffectBasedConditionLoop(d.VisibleToMeReader(), EffectType.VisibleToMe);
             }
             public IEnumerable<int> GetLastKnownEnemyPositionNodes() {
-                return FactBasedConditionLoop(n => lastKnownEnemyPositionReader(n) > 0, FactType.LastKnownEnemyPosition);
+                return FactBasedConditionLoop(n => d.LastKnownEnemyPositionReader()(n) > 0, FactType.LastKnownEnemyPosition);
             }
             public IEnumerable<int> GetLastKnownFriendlyPositionNodes() {
-                return FactBasedConditionLoop(n => lastKnownFriendlyPositionReader(n) > 0, FactType.LastKnownFriendlyPosition);
+                return FactBasedConditionLoop(n => d.LastKnownFriendlyPositionReader()(n) > 0, FactType.LastKnownFriendlyPosition);
             }
             public IEnumerable<int> GetFriendlyPresenceNodes() {
-                return FactBasedConditionLoop(n => friendlyPresenceReader(n) > 0, FactType.FriendlyPresence);
+                return FactBasedConditionLoop(n => d.KnownFriendlyPresenceReader()(n) > 0, FactType.FriendlyPresence);
+            }
+            public IEnumerable<int> GetSquadMemberPresenceNodes() {
+                return FactBasedConditionLoop(n => d.KnownSquadMemberPresenceReader()(n) > 0, FactType.SquadMemberPresence);
+            }
+            public IEnumerable<int> GetMyPositionNodes() {
+                return FactBasedConditionLoop(n => d.IsMyPositionReader()(n), FactType.MyPosition);
             }
             public IEnumerable<int> GetEnemyPresenceNodes() {
-                return FactBasedConditionLoop(n => enemyPresenceReader(n) > 0, FactType.EnemyPresence);
+                return FactBasedConditionLoop(n => d.KnownEnemyPresenceReader()(n) > 0, FactType.EnemyPresence);
             }
-            public IEnumerable<int> GetDangerNodes() {
-                return FactBasedConditionLoop(n => dangerLevelReader(n) > 0 && !hasDangerFromUnknownSourceReader(n), FactType.Danger);
+            public IEnumerable<int> GetNodesTakingFireFromKnownSource() {
+                return FactBasedConditionLoop(n => d.TakingFireMagnitudeLevelReader()(n) > 0 && !d.TakingFireFromUnknownSourceReader()(n), FactType.TakingFire);
             }
-            public IEnumerable<int> GetDangerFromUnknownSourceNodes() {
-                return FactBasedConditionLoop(hasDangerFromUnknownSourceReader, FactType.DangerFromUnknownSource);
+            public IEnumerable<int> GetNodesTakingFireFromUnknownSource() {
+                return FactBasedConditionLoop(d.TakingFireFromUnknownSourceReader(), FactType.TakingFireFromUnknownSource);
+            }
+            public IEnumerable<int> GetNodesTakingFire() {
+                return FactBasedConditionLoop(n => d.TakingFireMagnitudeLevelReader()(n) > 0, FactType.TakingFire, FactType.TakingFireFromUnknownSource);
             }
             public IEnumerable<int> GetNoKnownPresenceNodes() {
-                return CheckAllNodesLoop(noKnownPresenceReader);
+                return CheckAllNodesLoop(d.HasNoKnownPresenceReader());
             }
             public IEnumerable<int> GetFriendlyAreaNodes() {
-                return FactBasedConditionLoop(isFriendlyAreaReader, FactType.FriendlyPresence);
+                return FactBasedConditionLoop(d.IsFriendlyAreaReader(), FactType.FriendlyPresence, FactType.SquadMemberPresence, FactType.MyPosition);
             }
             public IEnumerable<int> GetEnemyAreaNodes() {
-                return FactBasedConditionLoop(isEnemyAreaReader, FactType.EnemyPresence);
+                return FactBasedConditionLoop(d.IsEnemyAreaReader(), FactType.EnemyPresence);
             }
             public IEnumerable<int> GetContestedAreaNodes() {
-                return FactBasedConditionLoop(isContestedAreaReader, FactType.FriendlyPresence, FactType.EnemyPresence);
+                return FactBasedConditionLoop(d.IsContestedAreaReader(), FactType.EnemyPresence);   // Cannot be contested without enemies present!
             }
             public IEnumerable<int> GetClearNodes() {
-                return EffectBasedConditionLoop(isClearReader, EffectType.Clear);
+                return EffectBasedConditionLoop(d.IsClearReader(), EffectType.Clear);
             }
             public IEnumerable<int> GetControlledByTeamNodes() {
-                return EffectBasedConditionLoop(isControlledByTeamReader, EffectType.Controlled);
+                return EffectBasedConditionLoop(d.IsControlledByTeamReader(), EffectType.Controlled);
             }
             public IEnumerable<int> GetControlledByEnemiesNodes() {
-                return EffectBasedConditionLoop(isControlledByEnemiesReader, EffectType.ControlledByEnemy);
+                return EffectBasedConditionLoop(d.IsControlledByEnemiesReader(), EffectType.ControlledByEnemy);
             }
             public IEnumerable<int> GetVisibleToEnemiesNodes() {
-                return EffectBasedConditionLoop(visibleToEnemiesReader, EffectType.VisibleToEnemies);
+                return EffectBasedConditionLoop(d.VisibleToEnemiesReader(), EffectType.VisibleToEnemies);
             }
             public IEnumerable<int> GetPotentialEnemiesNodes() {
-                return EffectBasedConditionLoop(potentialEnemiesReader, EffectType.PotentialEnemies);
+                return EffectBasedConditionLoop(d.PotentialEnemiesReader(), EffectType.PotentialEnemies);
             }
 
             private IEnumerable<int> CheckAllNodesLoop(Func<int, bool> condition) {
@@ -366,9 +386,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
             // Cached values for this node. Nullable values since upon creation of this object they have not been looked up yet.
             private int? friendlyPresence;
+            private int? squadMemberPresence;
+            private bool? myPresence;
             private int? enemyPresence;
-            private int? dangerLevel;
-            private bool? hasDangerFromUnknownSource;
+            private int? takingFireMagnitude;
+            private bool? takingFireFromUnknownSource;
             private bool? noKnownPresence;
             private bool? isFriendlyArea;
             private bool? isEnemyArea;
@@ -379,144 +401,146 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private bool? visibleToEnemies;
             private bool? potentialEnemies;
             private bool? visibleToFriendlies;
+            private bool? visibleToSquad;
+            private bool? visibleToMe;
+            private bool? sourceOfEnemyFire;
             private int? lastKnownEnemyPosition;
             private int? lastKnownFriendlyPosition;
 
-            // Lookup functions, used to lookup data values if they have not been cached yet.
-            private Func<int, int> friendlyPresenceReader;
-            private Func<int, int> enemyPresenceReader;
-            private Func<int, int> dangerLevelReader;
-            private Func<int, bool> hasDangerFromUnknownSourceReader;
-            private Func<int, bool> noKnownPresenceReader;
-            private Func<int, bool> isFriendlyAreaReader;
-            private Func<int, bool> isEnemyAreaReader;
-            private Func<int, bool> isContestedAreaReader;
-            private Func<int, bool> isClearReader;
-            private Func<int, bool> isControlledByTeamReader;
-            private Func<int, bool> isControlledByEnemiesReader;
-            private Func<int, bool> visibleToEnemiesReader;
-            private Func<int, bool> potentialEnemiesReader;
-            private Func<int, bool> visibleToFriendliesReader;
-            private Func<int, int> lastKnownEnemyPositionReader;
-            private Func<int, int> lastKnownFriendlyPositionReader;
+            private DynamicState d; // The data source parent object!
 
             // Public Properties which clients will use to query data about this node!
+            public bool SourceOfEnemyFire {
+                get {
+                    if (sourceOfEnemyFire == null) { sourceOfEnemyFire = d.SourceOfEnemyFireReader()(NodeId); }
+                    return sourceOfEnemyFire.Value;
+                }
+            }
             public bool VisibleToFriendlies {
                 get {
-                    if (visibleToFriendlies == null) { visibleToFriendlies = visibleToFriendliesReader(NodeId); }
+                    if (visibleToFriendlies == null) { visibleToFriendlies = d.VisibleToFriendliesReader()(NodeId); }
                     return visibleToFriendlies.Value;
+                }
+            }
+            public bool VisibleToSquad {
+                get {
+                    if (visibleToSquad == null) { visibleToSquad = d.VisibleToSquadReader()(NodeId); }
+                    return visibleToSquad.Value;
+                }
+            }
+            public bool VisibleToMe {
+                get {
+                    if (visibleToMe == null) { visibleToMe = d.VisibleToMeReader()(NodeId); }
+                    return visibleToMe.Value;
                 }
             }
             public int LastKnownEnemyPosition {
                 get {
-                    if (lastKnownEnemyPosition == null) { lastKnownEnemyPosition = lastKnownEnemyPositionReader(NodeId); }
+                    if (lastKnownEnemyPosition == null) { lastKnownEnemyPosition = d.LastKnownEnemyPositionReader()(NodeId); }
                     return lastKnownEnemyPosition.Value;
                 }
             }
             public int LastKnownFriendlyPosition {
                 get {
-                    if (lastKnownFriendlyPosition == null) { lastKnownFriendlyPosition = lastKnownFriendlyPositionReader(NodeId); }
+                    if (lastKnownFriendlyPosition == null) { lastKnownFriendlyPosition = d.LastKnownFriendlyPositionReader()(NodeId); }
                     return lastKnownFriendlyPosition.Value;
                 }
             }
             public int FriendlyPresence {
                 get {
-                    if (friendlyPresence == null) { friendlyPresence = friendlyPresenceReader(NodeId); }
+                    if (friendlyPresence == null) { friendlyPresence = d.KnownFriendlyPresenceReader()(NodeId); }
                     return friendlyPresence.Value;
+                }
+            }
+            public int SquadMemberPresence {
+                get {
+                    if (squadMemberPresence == null) { squadMemberPresence = d.KnownSquadMemberPresenceReader()(NodeId); }
+                    return squadMemberPresence.Value;
+                }
+            }
+            public bool IsMyPosition {
+                get {
+                    if (myPresence == null) { myPresence = d.IsMyPositionReader()(NodeId); }
+                    return myPresence.Value;
                 }
             }
             public int EnemyPresence {
                 get {
-                    if (enemyPresence == null) { enemyPresence = enemyPresenceReader(NodeId); }
+                    if (enemyPresence == null) { enemyPresence = d.KnownEnemyPresenceReader()(NodeId); }
                     return enemyPresence.Value;
                 }
             }
-            public int DangerLevel {
+            public int TakingFireMagnitudeLevel {
                 get {
-                    if (dangerLevel == null) { dangerLevel = dangerLevelReader(NodeId); }
-                    return dangerLevel.Value;
+                    if (takingFireMagnitude == null) { takingFireMagnitude = d.TakingFireMagnitudeLevelReader()(NodeId); }
+                    return takingFireMagnitude.Value;
                 }
             }
-            public bool HasDangerFromUnknownSource {
+            public bool TakingFireFromFromUnknownSource {
                 get {
-                    if (hasDangerFromUnknownSource == null) { hasDangerFromUnknownSource = hasDangerFromUnknownSourceReader(NodeId); }
-                    return hasDangerFromUnknownSource.Value;
+                    if (takingFireFromUnknownSource == null) { takingFireFromUnknownSource = d.TakingFireFromUnknownSourceReader()(NodeId); }
+                    return takingFireFromUnknownSource.Value;
                 }
             }
             public bool NoKnownPresence {
                 get {
-                    if (noKnownPresence == null) { noKnownPresence = noKnownPresenceReader(NodeId); }
+                    if (noKnownPresence == null) { noKnownPresence = d.HasNoKnownPresenceReader()(NodeId); }
                     return noKnownPresence.Value;
                 }
             }
             public bool IsFriendlyArea {
                 get {
-                    if (isFriendlyArea == null) isFriendlyArea = isFriendlyAreaReader(NodeId);
+                    if (isFriendlyArea == null) isFriendlyArea = d.IsFriendlyAreaReader()(NodeId);
                     return isFriendlyArea.Value;
                 }
             }
             public bool IsEnemyArea {
                 get {
-                    if (isEnemyArea == null) isEnemyArea = isEnemyAreaReader(NodeId);
+                    if (isEnemyArea == null) isEnemyArea = d.IsEnemyAreaReader()(NodeId);
                     return isEnemyArea.Value;
                 }
             }
             public bool IsContestedArea {
                 get {
-                    if (isContestedArea == null) isContestedArea = isContestedAreaReader(NodeId);
+                    if (isContestedArea == null) isContestedArea = d.IsContestedAreaReader()(NodeId);
                     return isContestedArea.Value;
                 }
             }
             public bool IsClear {
                 get {
-                    if (isClear == null) isClear = isClearReader(NodeId);
+                    if (isClear == null) isClear = d.IsClearReader()(NodeId);
                     return isClear.Value;
                 }
             }
             public bool IsControlledByTeam {
                 get {
-                    if (isControlledByTeam == null) isControlledByTeam = isControlledByTeamReader(NodeId);
+                    if (isControlledByTeam == null) isControlledByTeam = d.IsControlledByTeamReader()(NodeId);
                     return isControlledByTeam.Value;
                 }
             }
             public bool IsControlledByEnemies {
                 get {
-                    if (isControlledByEnemies == null) { isControlledByEnemies = isControlledByEnemiesReader(NodeId); }
+                    if (isControlledByEnemies == null) { isControlledByEnemies = d.IsControlledByEnemiesReader()(NodeId); }
                     return isControlledByEnemies.Value;
                 }
             }
             public bool VisibleToEnemies {
                 get {
-                    if (visibleToEnemies == null) visibleToEnemies = visibleToEnemiesReader(NodeId);
+                    if (visibleToEnemies == null) visibleToEnemies = d.VisibleToEnemiesReader()(NodeId);
                     return visibleToEnemies.Value;
                 }
             }
             public bool PotentialEnemies {
                 get {
-                    if (potentialEnemies == null) potentialEnemies = potentialEnemiesReader(NodeId);
+                    if (potentialEnemies == null) potentialEnemies = d.PotentialEnemiesReader()(NodeId);
                     return potentialEnemies.Value;
                 }
             }
             
             // Constructor with horrificly long paramter list, but it's fine coz it's only used in one location.
-            internal AreaNode(int nodeId, Func<int, int> friendlyPresenceReader, Func<int, int> enemyPresenceReader, Func<int, int> dangerLevelReader, Func<int, bool> hasDangerFromUnknownSourceReader, Func<int, bool> noKnownPresenceReader, Func<int, bool> isFriendlyAreaReader, Func<int, bool> isEnemyAreaReader, Func<int, bool> isContestedAreaReader, Func<int, bool> isClearReader, Func<int, bool> isControlledByTeamReader, Func<int, bool> isControlledByEnemiesReader, Func<int, bool> visibleToEnemiesReader, Func<int, bool> potentialEnemiesReader, Func<int, bool> visibleToFriendliesReader, Func<int, int> lastKnownEnemyPositionReader, Func<int, int> lastKnownFriendlyPositionReader) {
+            internal AreaNode(int nodeId, DynamicState parent) {
                 NodeId = nodeId;
-                this.friendlyPresenceReader = friendlyPresenceReader;
-                this.enemyPresenceReader = enemyPresenceReader;
-                this.dangerLevelReader = dangerLevelReader;
-                this.hasDangerFromUnknownSourceReader = hasDangerFromUnknownSourceReader;
-                this.noKnownPresenceReader = noKnownPresenceReader;
-                this.isFriendlyAreaReader = isFriendlyAreaReader;
-                this.isEnemyAreaReader = isEnemyAreaReader;
-                this.isContestedAreaReader = isContestedAreaReader;
-                this.isClearReader = isClearReader;
-                this.isControlledByTeamReader = isControlledByTeamReader;
-                this.isControlledByEnemiesReader = isControlledByEnemiesReader;
-                this.visibleToEnemiesReader = visibleToEnemiesReader;
-                this.potentialEnemiesReader = potentialEnemiesReader;
-                this.visibleToFriendliesReader = visibleToFriendliesReader;
-                this.lastKnownEnemyPositionReader = lastKnownEnemyPositionReader;
-                this.lastKnownFriendlyPositionReader = lastKnownFriendlyPositionReader;
+                this.d = parent;
 
                 // All cached value fields will initialise to Null, since they are nullable fields.
             }
@@ -535,60 +559,78 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private bool? isCausingVisibleToEnemiesEffect;
             private bool? isCausingPotentialEnemiesEffect;
             private bool? isCausingVisibleToFriendliesEffect;
+            private bool? isCausingSourceOfEnemyFireEffect;
+            private bool? isCausingTakingFireEffect;
+            private bool? isCausingVisibleToSquadEffect;
+            private bool? isCausingVisibleToMeEffect;
 
-            private Func<int, int, bool> causingClearEffectReader;
-            private Func<int, int, bool> causingControlledByTeamEffectReader;
-            private Func<int, int, bool> causingControlledByEnemiesEffectReader;
-            private Func<int, int, bool> causingVisibleToEnemiesEffectReader;
-            private Func<int, int, bool> causingPotentialEnemiesEffectReader;
-            private Func<int, int, bool> causingVisibleToFriendliesEffectReader;
+            private DynamicState d;     // Parent from which we read data.
 
+            public bool IsCausingVisibleToSquadEffect {
+                get {
+                    if (isCausingVisibleToSquadEffect == null) isCausingVisibleToSquadEffect = d.CausingVisibleToSquadEffectReader()(FromNodeId, ToNodeId);
+                    return isCausingVisibleToSquadEffect.Value;
+                }
+            }
+            public bool IsCausingVisibleToMeEffect {
+                get {
+                    if (isCausingVisibleToMeEffect == null) isCausingVisibleToMeEffect = d.CausingVisibleToMeEffectReader()(FromNodeId, ToNodeId);
+                    return isCausingVisibleToMeEffect.Value;
+                }
+            }
+            public bool IsCausingTakingFireEffect {
+                get {
+                    if (isCausingTakingFireEffect == null) isCausingTakingFireEffect = d.CausingTakingFireEffectReader()(FromNodeId, ToNodeId);
+                    return isCausingTakingFireEffect.Value;
+                }
+            }
+            public bool IsCausingSourceOfEnemyFireEffect {
+                get {
+                    if (isCausingSourceOfEnemyFireEffect == null) isCausingSourceOfEnemyFireEffect = d.CausingSourceOfFireEffectReader()(FromNodeId, ToNodeId);
+                    return isCausingSourceOfEnemyFireEffect.Value;
+                }
+            }
             public bool IsCausingVisibleToFriendliesEffect {
                 get {
-                    if (isCausingVisibleToFriendliesEffect == null) isCausingVisibleToFriendliesEffect = causingVisibleToFriendliesEffectReader(FromNodeId, ToNodeId);
+                    if (isCausingVisibleToFriendliesEffect == null) isCausingVisibleToFriendliesEffect = d.CausingVisibleToFriendliesEffectReader()(FromNodeId, ToNodeId);
                     return isCausingVisibleToFriendliesEffect.Value;
                 }
             }
             public bool IsCausingClearEffect {
                 get {
-                    if (isCausingClearEffect == null) isCausingClearEffect = causingClearEffectReader(FromNodeId, ToNodeId);
+                    if (isCausingClearEffect == null) isCausingClearEffect = d.CausingClearEffectReader()(FromNodeId, ToNodeId);
                     return isCausingClearEffect.Value;
                 }
             }
             public bool IsCausingControlledByTeamEffect {
                 get {
-                    if (isCausingControlledByTeamEffect == null) isCausingControlledByTeamEffect = causingControlledByTeamEffectReader(FromNodeId, ToNodeId);
+                    if (isCausingControlledByTeamEffect == null) isCausingControlledByTeamEffect = d.CausingControlledByTeamEffectReader()(FromNodeId, ToNodeId);
                     return isCausingControlledByTeamEffect.Value;
                 }
             }
             public bool IsCausingControlledByEnemiesEffect {
                 get {
-                    if (isCausingControlledByEnemiesEffect == null) isCausingControlledByEnemiesEffect = causingControlledByEnemiesEffectReader(FromNodeId, ToNodeId);
+                    if (isCausingControlledByEnemiesEffect == null) isCausingControlledByEnemiesEffect = d.CausingControlledByEnemiesEffectReader()(FromNodeId, ToNodeId);
                     return isCausingControlledByEnemiesEffect.Value;
                 }
             }
             public bool IsCausingVisibleToEnemiesEffect {
                 get {
-                    if (isCausingVisibleToEnemiesEffect == null) isCausingVisibleToEnemiesEffect = causingVisibleToEnemiesEffectReader(FromNodeId, ToNodeId);
+                    if (isCausingVisibleToEnemiesEffect == null) isCausingVisibleToEnemiesEffect = d.CausingVisibleToEnemiesEffectReader()(FromNodeId, ToNodeId);
                     return isCausingVisibleToEnemiesEffect.Value;
                 }
             }
             public bool IsCausingPotentialEnemiesEffect {
                 get {
-                    if (isCausingPotentialEnemiesEffect == null) isCausingPotentialEnemiesEffect = causingPotentialEnemiesEffectReader(FromNodeId, ToNodeId);
+                    if (isCausingPotentialEnemiesEffect == null) isCausingPotentialEnemiesEffect = d.CausingPotentialEnemiesEffectReader()(FromNodeId, ToNodeId);
                     return isCausingPotentialEnemiesEffect.Value;
                 }
             }
 
-            internal AreaEdge(int fromNodeId, int toNodeId, Func<int, int, bool> causingClearEffectReader, Func<int, int, bool> causingControlledByTeamEffectReader, Func<int, int, bool> causingControlledByEnemiesEffectReader, Func<int, int, bool> causingVisibleToEnemiesEffectReader, Func<int, int, bool> causingPotentialEnemiesEffectReader, Func<int, int, bool> causingVisibleToFriendliesEffectReader) {
+            internal AreaEdge(int fromNodeId, int toNodeId, DynamicState parent) {
                 FromNodeId = fromNodeId;
                 ToNodeId = toNodeId;
-                this.causingClearEffectReader = causingClearEffectReader;
-                this.causingControlledByTeamEffectReader = causingControlledByTeamEffectReader;
-                this.causingControlledByEnemiesEffectReader = causingControlledByEnemiesEffectReader;
-                this.causingVisibleToEnemiesEffectReader = causingVisibleToEnemiesEffectReader;
-                this.causingPotentialEnemiesEffectReader = causingPotentialEnemiesEffectReader;
-                this.causingVisibleToFriendliesEffectReader = causingVisibleToFriendliesEffectReader;
+                d = parent;
             }
         }
     }
@@ -603,20 +645,35 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHiddenTypes {
 
     public enum FactType {
+        /// <summary> Friendly Presence: The area is known to have generic friendly units present, with whom we cannot communicate </summary>
         FriendlyPresence,
+        /// <summary> Squad Member Presence: The area has units present which are able to be communicated with (are part of this unit's "team" or "squad") </summary>
+        SquadMemberPresence,
+        /// <summary> My Position: The position of the unit who owns this world representation. </summary>
+        MyPosition,
+        /// <summary> Enemy Presence: Known enemy locations. This means that we assume enemies are CURRENTLY in this area! </summary>
         EnemyPresence,
-        Danger,
-        DangerFromUnknownSource,
+        /// <summary> Taking Fire: This area is under or was recently under attack, and we know the area(s) which were the source of the attack </summary>
+        TakingFire,
+        /// <summary> Taking Fire: This area is under or was recently under attack, and we DO NOT know the area(s) which were the source of the attack </summary>
+        TakingFireFromUnknownSource,
+        /// <summary> Last Known Enemy Position: An enemy was spotted here who is now no longer visible, and has not been spotted since. </summary>
         LastKnownEnemyPosition,
-        LastKnownFriendlyPosition
+        /// <summary> Last Knwon Friendly Position: A generic Friendly was spotted here who is now no longer visible and has not been spotted since. </summary>
+        /// <remarks> Note that this only applies to generic friendlies and not team mates or self, because it is assumed firendlies with which we can communicate would always update us on their position. </remarks>
+        LastKnownFriendlyPosition,
+        
     }
     public enum EffectType {
         Clear,
         Controlled,
         VisibleToEnemies,
         VisibleToFriendlies,
+        VisibleToSquad,
+        VisibleToMe,
         PotentialEnemies,
-        ControlledByEnemy
+        ControlledByEnemy,
+        SourceOfEnemyFire
     }
 
     // Serves as a hardcoded lookup table which defines which types of effects preclude other types of effects from being true,
@@ -635,51 +692,67 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
         static FactAndEffectRules() {
             effectsPrecludedByEffectTable = new HashSet<EffectType>[Enum.GetNames(typeof(EffectType)).Length];     // Number of EffectTypes
             effectsPrecludedByEffectTable[(int)EffectType.Clear] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
-            effectsPrecludedByEffectTable[(int)EffectType.Controlled] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
-            effectsPrecludedByEffectTable[(int)EffectType.VisibleToFriendlies] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
+            effectsPrecludedByEffectTable[(int)EffectType.Controlled] = new HashSet<EffectType>(new EffectType[] { } );
+            effectsPrecludedByEffectTable[(int)EffectType.VisibleToSquad] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
+            effectsPrecludedByEffectTable[(int)EffectType.VisibleToFriendlies] = new HashSet<EffectType>(new EffectType[] { } );
+            effectsPrecludedByEffectTable[(int)EffectType.VisibleToMe] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
             effectsPrecludedByEffectTable[(int)EffectType.ControlledByEnemy] = new HashSet<EffectType>(new EffectType[] { } );
             effectsPrecludedByEffectTable[(int)EffectType.VisibleToEnemies] = new HashSet<EffectType>(new EffectType[] { } );
             effectsPrecludedByEffectTable[(int)EffectType.PotentialEnemies] = new HashSet<EffectType>(new EffectType[] { } );
+            effectsPrecludedByEffectTable[(int)EffectType.SourceOfEnemyFire] = new HashSet<EffectType>(new EffectType[] { } );
 
             effectsIncludedByFactTable = new HashSet<EffectType>[Enum.GetNames(typeof(FactType)).Length];    // Number of FactTypes
-            effectsIncludedByFactTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.VisibleToFriendlies });
+            effectsIncludedByFactTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.VisibleToFriendlies });
+            effectsIncludedByFactTable[(int)FactType.SquadMemberPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.VisibleToSquad, EffectType.VisibleToFriendlies });
+            effectsIncludedByFactTable[(int)FactType.MyPosition] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.VisibleToSquad, EffectType.VisibleToMe, EffectType.VisibleToFriendlies });
             effectsIncludedByFactTable[(int)FactType.EnemyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.VisibleToEnemies });
-            effectsIncludedByFactTable[(int)FactType.Danger] = new HashSet<EffectType>(new EffectType[] { });
-            effectsIncludedByFactTable[(int)FactType.DangerFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies });
+            effectsIncludedByFactTable[(int)FactType.TakingFire] = new HashSet<EffectType>(new EffectType[] { });
+            effectsIncludedByFactTable[(int)FactType.TakingFireFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies });
             effectsIncludedByFactTable[(int)FactType.LastKnownEnemyPosition] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies });
             effectsIncludedByFactTable[(int)FactType.LastKnownFriendlyPosition] = new HashSet<EffectType>(new EffectType[] { });
 
             effectsPrecludedByFactTable = new HashSet<EffectType>[Enum.GetNames(typeof(FactType)).Length];  // Number of FactTypes
-            effectsPrecludedByFactTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.PotentialEnemies });
+            effectsPrecludedByFactTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy });
+            effectsPrecludedByFactTable[(int)FactType.SquadMemberPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.PotentialEnemies });
+            effectsPrecludedByFactTable[(int)FactType.MyPosition] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.PotentialEnemies });
             effectsPrecludedByFactTable[(int)FactType.EnemyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled });
-            effectsPrecludedByFactTable[(int)FactType.Danger] = new HashSet<EffectType>(new EffectType[] { });
-            effectsPrecludedByFactTable[(int)FactType.DangerFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { });
+            effectsPrecludedByFactTable[(int)FactType.TakingFire] = new HashSet<EffectType>(new EffectType[] { });
+            effectsPrecludedByFactTable[(int)FactType.TakingFireFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { });
             effectsPrecludedByFactTable[(int)FactType.LastKnownEnemyPosition] = new HashSet<EffectType>(new EffectType[] { });
             effectsPrecludedByFactTable[(int)FactType.LastKnownFriendlyPosition] = new HashSet<EffectType>(new EffectType[] { });
 
             effectsWhichPrecludeTable = new HashSet<EffectType>[Enum.GetNames(typeof(EffectType)).Length];
-            effectsWhichPrecludeTable[(int)EffectType.PotentialEnemies] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.VisibleToFriendlies });
+            effectsWhichPrecludeTable[(int)EffectType.PotentialEnemies] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.VisibleToSquad, EffectType.VisibleToMe });
             effectsWhichPrecludeTable[(int)EffectType.Clear] = new HashSet<EffectType>(new EffectType[] { });
             effectsWhichPrecludeTable[(int)EffectType.Controlled] = new HashSet<EffectType>(new EffectType[] { });
             effectsWhichPrecludeTable[(int)EffectType.VisibleToEnemies] = new HashSet<EffectType>(new EffectType[] { });
             effectsWhichPrecludeTable[(int)EffectType.ControlledByEnemy] = new HashSet<EffectType>(new EffectType[] { });
             effectsWhichPrecludeTable[(int)EffectType.VisibleToFriendlies] = new HashSet<EffectType>(new EffectType[] { });
+            effectsWhichPrecludeTable[(int)EffectType.VisibleToSquad] = new HashSet<EffectType>(new EffectType[] { });
+            effectsWhichPrecludeTable[(int)EffectType.VisibleToMe] = new HashSet<EffectType>(new EffectType[] { });
+            effectsWhichPrecludeTable[(int)EffectType.SourceOfEnemyFire] = new HashSet<EffectType>(new EffectType[] { });
 
             factsWhichIncludeTable = new HashSet<FactType>[Enum.GetNames(typeof(EffectType)).Length];
-            factsWhichIncludeTable[(int)EffectType.PotentialEnemies] = new HashSet<FactType>(new FactType[] { FactType.DangerFromUnknownSource, FactType.LastKnownEnemyPosition });
-            factsWhichIncludeTable[(int)EffectType.Clear] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence });
-            factsWhichIncludeTable[(int)EffectType.Controlled] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence });
+            factsWhichIncludeTable[(int)EffectType.PotentialEnemies] = new HashSet<FactType>(new FactType[] { FactType.TakingFireFromUnknownSource, FactType.LastKnownEnemyPosition });
+            factsWhichIncludeTable[(int)EffectType.Clear] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition });
+            factsWhichIncludeTable[(int)EffectType.Controlled] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition });
             factsWhichIncludeTable[(int)EffectType.VisibleToEnemies] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
-            factsWhichIncludeTable[(int)EffectType.VisibleToFriendlies] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence });
+            factsWhichIncludeTable[(int)EffectType.VisibleToFriendlies] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence , FactType.MyPosition, FactType.SquadMemberPresence });
             factsWhichIncludeTable[(int)EffectType.ControlledByEnemy] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
+            factsWhichIncludeTable[(int)EffectType.VisibleToSquad] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition });
+            factsWhichIncludeTable[(int)EffectType.VisibleToMe] = new HashSet<FactType>(new FactType[] { FactType.MyPosition });
+            factsWhichIncludeTable[(int)EffectType.SourceOfEnemyFire] = new HashSet<FactType>(new FactType[] { });
 
             factsWhichPrecludeTable = new HashSet<FactType>[Enum.GetNames(typeof(EffectType)).Length];
-            factsWhichPrecludeTable[(int)EffectType.PotentialEnemies] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence });
+            factsWhichPrecludeTable[(int)EffectType.PotentialEnemies] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition });
             factsWhichPrecludeTable[(int)EffectType.Clear] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
             factsWhichPrecludeTable[(int)EffectType.Controlled] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
             factsWhichPrecludeTable[(int)EffectType.VisibleToEnemies] = new HashSet<FactType>(new FactType[] {  });
             factsWhichPrecludeTable[(int)EffectType.VisibleToFriendlies] = new HashSet<FactType>(new FactType[] {  });
-            factsWhichPrecludeTable[(int)EffectType.ControlledByEnemy] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence });
+            factsWhichPrecludeTable[(int)EffectType.VisibleToMe] = new HashSet<FactType>(new FactType[] {  });
+            factsWhichPrecludeTable[(int)EffectType.VisibleToSquad] = new HashSet<FactType>(new FactType[] {  });
+            factsWhichPrecludeTable[(int)EffectType.SourceOfEnemyFire] = new HashSet<FactType>(new FactType[] {  });
+            factsWhichPrecludeTable[(int)EffectType.ControlledByEnemy] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence, FactType.MyPosition, FactType.SquadMemberPresence });
         }
 
         public static HashSet<EffectType> GetEffectsPrecludedByEffect(EffectType e) {

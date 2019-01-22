@@ -21,7 +21,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             Dictionary<FactType, IFactAdder> dict = new Dictionary<FactType, IFactAdder> {
                 { FactType.FriendlyPresence,        friendlyAdder.Object      },
                 { FactType.EnemyPresence,           enemyAdder.Object         },
-                { FactType.DangerFromUnknownSource, unknownDangerAdder.Object }
+                { FactType.TakingFireFromUnknownSource, unknownDangerAdder.Object }
             };
             Assert.Throws<ArgumentException>(() => new WorldUpdator(dict));
         }
@@ -45,26 +45,26 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             Mock<IDynamicStateChange> change1 = new Mock<IDynamicStateChange>();
             change1.Setup(c => c.AffectedNodes).Returns(new int[] { 2, 4, 5 });     // The change affects nodes 2, 4, and 5
             change1.Setup(c => c.TimeLearned).Returns(time);
-            Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> beforeFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
+            Dictionary<int, IEnumerable<(FactType, int, IEnumerable<int>)>> beforeFacts = new Dictionary<int, IEnumerable<(FactType, int, IEnumerable<int>)>> {
                 // No facts are removed or updated in node 2 by this change.
-                { 2, new KeyValuePair<FactType, int>[] { } },
+                { 2, new (FactType, int, IEnumerable<int>)[] { } },
 
                 // Node 4 has the friendlies fact removed by this change. Thus it must appear in the 'before' set so that this change is reversible.
-                { 4, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.FriendlyPresence, 1)} },
+                { 4, new (FactType, int, IEnumerable<int>)[] { (FactType.FriendlyPresence, 1, null) } },
 
                 // No facts are removed or updated in node 5 by this change.
-                { 5, new KeyValuePair<FactType, int>[] { } }
+                { 5, new (FactType, int, IEnumerable<int>)[] { } }
             };
             change1.Setup(c => c.GetFactsBefore()).Returns(beforeFacts);
-            Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> afterFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
+            Dictionary<int, IEnumerable<(FactType, int, IEnumerable<int>)>> afterFacts = new Dictionary<int, IEnumerable<(FactType, int, IEnumerable<int>)>> {
                 // Enemies were spotted in node 2 during this event
-                { 2, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.EnemyPresence, 2)} },
+                { 2, new (FactType, int, IEnumerable<int>)[] { (FactType.EnemyPresence, 2, null) } },
 
                 // Node 4 has danger applied to it with a super high rating since friendlies were wiped out!
-                { 4, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.Danger, 7)} },
+                { 4, new (FactType, int, IEnumerable<int>)[] { (FactType.TakingFire, 7, null) } },
 
                 // Node 5 also had danger applied to it!
-                { 5, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.Danger, 2)} }
+                { 5, new (FactType, int, IEnumerable<int>)[] { (FactType.TakingFire, 2, null) } }
             };
             change1.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
 
@@ -81,11 +81,11 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             mocks[FactType.FriendlyPresence].Verify(f => f.RemoveFact(fakeWorld, 4, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
 
             // Danger Adder should have been called once for node 4, and once for node 5, with the correct value levels!
-            mocks[FactType.Danger].Verify(d => d.AddFact(fakeWorld, 4, 7, time, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
-            mocks[FactType.Danger].Verify(d => d.AddFact(fakeWorld, 5, 2, time, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.TakingFire].Verify(d => d.AddFact(fakeWorld, 4, 7, time, It.IsAny<Dictionary<FactType, Fact.MutableFact>>(), null), Times.Once());
+            mocks[FactType.TakingFire].Verify(d => d.AddFact(fakeWorld, 5, 2, time, It.IsAny<Dictionary<FactType, Fact.MutableFact>>(), null), Times.Once());
 
             // Enemy Adder should have been called once on node 2 for adding.
-            mocks[FactType.EnemyPresence].Verify(e => e.AddFact(fakeWorld, 2, 2, time, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.EnemyPresence].Verify(e => e.AddFact(fakeWorld, 2, 2, time, It.IsAny<Dictionary<FactType, Fact.MutableFact>>(), null), Times.Once());
 
             // Other adders should not have been called.
             foreach(Mock<IFactAdder> m in mocks.Values) {
@@ -114,26 +114,26 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             Mock<IDynamicStateChange> change1 = new Mock<IDynamicStateChange>();
             change1.Setup(c => c.AffectedNodes).Returns(new int[] { 2, 4, 5 });     // The change affects nodes 2, 4, and 5
             change1.Setup(c => c.TimeLearned).Returns(time);
-            Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> beforeFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
+            Dictionary<int, IEnumerable<(FactType, int, IEnumerable<int>)>> beforeFacts = new Dictionary<int, IEnumerable<(FactType, int, IEnumerable<int>)>> {
                 // No facts are removed or updated in node 2 by this change.
-                { 2, new KeyValuePair<FactType, int>[] { } },
+                { 2, new (FactType, int, IEnumerable<int>)[] { } },
 
                 // Node 4 has the friendlies fact removed by this change. Thus it must appear in the 'before' set so that this change is reversible.
-                { 4, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.FriendlyPresence, 1)} },
+                { 4, new (FactType, int, IEnumerable<int>)[] { (FactType.FriendlyPresence, 1, null) } },
 
                 // No facts are removed or updated in node 5 by this change.
-                { 5, new KeyValuePair<FactType, int>[] { } }
+                { 5, new (FactType, int, IEnumerable<int>)[] { } }
             };
             change1.Setup(c => c.GetFactsBefore()).Returns(beforeFacts);
-            Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> afterFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
+            Dictionary<int, IEnumerable<(FactType, int, IEnumerable<int>)>> afterFacts = new Dictionary<int, IEnumerable<(FactType, int, IEnumerable<int>)>> {
                 // Enemies were spotted in node 2 during this event
-                { 2, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.EnemyPresence, 2)} },
+                { 2, new (FactType, int, IEnumerable<int>)[] { (FactType.EnemyPresence, 2, null) } },
 
                 // Node 4 has danger applied to it with a super high rating since friendlies were wiped out!
-                { 4, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.Danger, 7)} },
+                { 4, new (FactType, int, IEnumerable<int>)[] { (FactType.TakingFire, 7, new int[] { 3 }) } },
 
                 // Node 5 also had danger applied to it!
-                { 5, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.Danger, 2)} }
+                { 5, new (FactType, int, IEnumerable<int>)[] { (FactType.TakingFire, 2, new int[] { 3 }) } }
             };
             change1.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
 
@@ -147,11 +147,11 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.WorldU
             // VERIFY that the correct removal and add calls were made on the correct factAdder objects. ----------------------------
 
             // Friendly Adder should have been called once for addition on node 4 with a value of 1 (the 'before' fact)
-            mocks[FactType.FriendlyPresence].Verify(f => f.AddFact(fakeWorld, 4, 1, time, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.FriendlyPresence].Verify(f => f.AddFact(fakeWorld, 4, 1, time, It.IsAny<Dictionary<FactType, Fact.MutableFact>>(), null), Times.Once());
 
             // Danger Adder should have called 'remove' once for node 4, and once for node 5.
-            mocks[FactType.Danger].Verify(d => d.RemoveFact(fakeWorld, 4, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
-            mocks[FactType.Danger].Verify(d => d.RemoveFact(fakeWorld, 5, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.TakingFire].Verify(d => d.RemoveFact(fakeWorld, 4, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
+            mocks[FactType.TakingFire].Verify(d => d.RemoveFact(fakeWorld, 5, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
 
             // Enemy Adder should have been called once on node 2 for adding.
             mocks[FactType.EnemyPresence].Verify(e => e.RemoveFact(fakeWorld, 2, It.IsAny<Dictionary<FactType, Fact.MutableFact>>()), Times.Once());
