@@ -48,14 +48,16 @@ namespace TacticalGameAiIntegrationTests.DecisionLayer.WorldRepresentationSystem
             };
             change2.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
             change3 = new Mock<IDynamicStateChange>();
-            change3.Setup(c => c.AffectedNodes).Returns(new int[] { 2 });
+            change3.Setup(c => c.AffectedNodes).Returns(new int[] { 2, 9 });
             change3.Setup(c => c.TimeLearned).Returns(time3);
             beforeFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
                 { 2, new KeyValuePair<FactType, int>[] { } },
+                { 9, new KeyValuePair<FactType, int>[] { } },
             };
             change3.Setup(c => c.GetFactsBefore()).Returns(beforeFacts);
             afterFacts = new Dictionary<int, IEnumerable<KeyValuePair<FactType, int>>> {
                 { 2, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.EnemyPresence, 3)} },
+                { 9, new KeyValuePair<FactType, int>[] { new KeyValuePair<FactType, int>(FactType.TakingFire, 1)} }
             };
             change3.Setup(c => c.GetFactsAfter()).Returns(afterFacts);
             change4 = new Mock<IDynamicStateChange>();

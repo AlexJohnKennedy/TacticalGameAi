@@ -143,7 +143,6 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             return FactValueReaderFunction(FactType.SquadMemberPresence);
         }
         public Func<int, int> TakingFireMagnitudeLevelReader() {
-            // Danger levels are reported as the sum of all Facts which signal 'danger'.
             return n => FactValueReaderFunction(FactType.TakingFire)(n) + FactValueReaderFunction(FactType.TakingFireFromUnknownSource)(n);
         }
         public Func<int, bool> IsMyPositionReader() {

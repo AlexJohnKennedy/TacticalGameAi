@@ -354,8 +354,11 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             };
             facts[8] = new Dictionary<FactType, Fact> { { FactType.LastKnownEnemyPosition, new Fact(FactType.LastKnownEnemyPosition, 1, defaultTime, e) } };
 
-            // Node 9 has no facts.
-            facts[9] = new Dictionary<FactType, Fact> { };
+            // Node 9 is taking fire from node 8
+            e = new List<Effect> {
+                new Effect(EffectType.SourceOfEnemyFire, 1, 8, 9)
+            };
+            facts[9] = new Dictionary<FactType, Fact> { { FactType.TakingFire, new Fact(FactType.TakingFire, 1, defaultTime, e) } };
 
             return new DynamicState(facts);
         }
@@ -375,7 +378,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetControlledByEnemiesNodes());
             CollectionAssert.AreEquivalent(new int[] { 1, 3, 5, 6, 7, 8, 9 }, set.GetNoKnownPresenceNodes());
             CollectionAssert.AreEquivalent(new int[] { 2 }, set.GetEnemyPresenceNodes());
-            CollectionAssert.AreEquivalent(new int[] { }, set.GetNodesTakingFireFromKnownSource());
+            CollectionAssert.AreEquivalent(new int[] { 9 }, set.GetNodesTakingFireFromKnownSource());
         }
 
         public static void CheckTestDynamicState(DynamicState toTest) {
@@ -435,6 +438,8 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetNodeData(8).EnemyPresence == 0);
             Assert.IsTrue(!toTest.GetNodeData(8).IsEnemyArea);
             Assert.IsTrue(!toTest.GetNodeData(8).IsContestedArea);
+            Assert.IsTrue(toTest.GetNodeData(9).TakingFireMagnitudeLevel == 1);
+            Assert.IsTrue(toTest.GetNodeData(8).SourceOfEnemyFire);
 
             // Do the same tests but using the graph-subset reader functions
             Func<int, bool> visf = toTest.VisibleToSquadReader();
@@ -457,6 +462,8 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(lastE(8) == 1 && lastE(5) == 0 && lastE(3) == 0);
             Func<int, int> lastF = toTest.LastKnownFriendlyPositionReader();
             Assert.IsTrue(lastF(6) == 2 && lastF(8) == 0 && lastF(5) == 0 && lastF(3) == 0);
+            Func<int, int> takingFire = toTest.TakingFireMagnitudeLevelReader();
+            Assert.IsTrue(takingFire(9) == 1 && takingFire(4) == 0 && takingFire(0) == 0);
 
             // Test edges
             Func<int, int, bool> clearing = toTest.CausingClearEffectReader();
@@ -470,7 +477,7 @@ namespace TacticalGameAiUnitTests.DecisionLayer.WorldRepresentationSystem.ValueO
             Assert.IsTrue(toTest.GetEdge(0, 3).IsCausingClearEffect && toTest.GetEdge(0, 3).IsCausingControlledByTeamEffect);
             Assert.IsTrue(toTest.GetEdge(2, 1).IsCausingVisibleToEnemiesEffect && toTest.GetEdge(2, 5).IsCausingVisibleToEnemiesEffect);
             Assert.IsTrue(toTest.GetEdge(5, 1).IsCausingPotentialEnemiesEffect && toTest.GetEdge(8, 6).IsCausingPotentialEnemiesEffect && toTest.GetEdge(8, 7).IsCausingPotentialEnemiesEffect);
-
+            Assert.IsTrue(toTest.GetEdge(9, 8).IsCausingSourceOfEnemyFireEffect && toTest.GetEdge(8, 9).IsCausingTakingFireEffect);
             // TODO: 8 - Implement specfic logic to define what happens when you call a node edge read from a node, to itself. I.e. dynamicStateInstance.GetEdge(x, x).friendlies;. Possibly not allowed?
         }
     }
