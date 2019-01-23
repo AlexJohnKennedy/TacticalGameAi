@@ -17,6 +17,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         private List<Effect>[,] areaEffects;
 
         // Internal interface. Special priviledged objects can use these to read the internal data of a DynamicState (e.g. WorldUpdator Logic)
+        // TODO: 5 - redesign this accessibility so that other systems dont use it by accident and make DynamicState mutable!
         internal Dictionary<FactType, Fact> GetNodeFact(int id) { return areaFacts[id]; }
         internal Dictionary<EffectType, EffectSum> GetNodeEffectSum(int id) { return areaEffectSums[id]; }
 
