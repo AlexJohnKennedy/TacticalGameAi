@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects;
+using Priority_Queue;
 
 namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterpreterSystem {
 
@@ -9,6 +10,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
     }
 
     public class GraphTraversalBasedWorldInterpreter : IWorldInterpreter {
+
+        private const float NEUTRAL_DISTANCE_THRESHOLD = 100;   // This interpreter will assume any node over 100 meters away from an enemy source point is neutral if it would otherwise have potential enemies.
 
         private enum ThreatLevel {
             Unchecked,
@@ -87,9 +90,9 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
 
             // Complete a search from each 'starting point'. We will Djikstra search based on traversal distances from each point.
             foreach (int startArea in threatSearchStartPoints) {
-                Queue<TraversalNode> searchQueue = new Queue<TraversalNode>();
+                SimplePriorityQueue<TraversalNode, float> searchQueue = new SimplePriorityQueue<TraversalNode, float>();
                 TraversalNode startPoint = new TraversalNode(startArea, ThreatLevel.PotentialThreat, 0, -1);
-                searchQueue.Enqueue(startPoint);
+                searchQueue.Enqueue(startPoint, 0);
                 exploredSet[startArea] = ThreatLevel.PotentialThreat;
                 while (searchQueue.Count > 0) {
                     TraversalNode curr = searchQueue.Dequeue();
@@ -103,7 +106,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
                         // If the known threat level of the candidate node is lower than the current node, we have the potential to promote it's threat level higher.
                         // Note that completely unexplored nodes have an effective threat level of zero, thus will always be expanded.
                         if (exploredSet[candidate] < exploredSet[curr.areaNodeId]) {
-                            UpdateThreatLevelIfRequired(candidate, curr.currThreatLevel, world, exploredSet[candidate]);
+                            DetermineCandidateThreatLevel(candidate, curr, world, out exploredSet[candidate]);
+                            searchQueue.Enqueue(new TraversalNode(candidate, exploredSet[candidate], curr.currCost + s.GetEdge(curr.areaNodeId, candidate).Distance, curr.areaNodeId), curr.currCost + s.GetEdge(curr.areaNodeId, candidate).Distance);
                         }
                     }
                 }
@@ -117,16 +121,29 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
             return null;
         }
 
-        private void UpdateCandidateThreatLevelIfRequired(int candidate, int curr, ThreatLevel currThreatLevel, WorldRepresentation world, out ThreatLevel candidateThreatLevel) {
+        private void DetermineCandidateThreatLevel(int candidate, TraversalNode curr, WorldRepresentation world, out ThreatLevel candidateThreatLevel) {
             // Do a series of checks to determine what the threat level should be, based on the world representation.
             Func<int, bool> controlledByTeam = world.DynamicState.IsControlledByTeamReader();
+            Func<int, bool> influencedByTeam = world.DynamicState.IsInfluencedByTeamReader();
             Func<int, bool> clear   = world.DynamicState.IsClearReader();
             Func<int, bool> visible = world.DynamicState.VisibleToSquadReader();
-            if (controlledByTeam(curr) || (controlledByTeam(candidate) && world.DynamicState.GetNodeData(candidate).EnemyPresence == 0)) {
+            int nodeWeCameFrom = curr.areaNodeId;
+            // This node we are exploring is deemed:
+            // 'Secure' if it is controlled, or if the node through which the enemies reach it is at least influenced.
+            if (influencedByTeam(nodeWeCameFrom) || controlledByTeam(candidate)) {
                 candidateThreatLevel = ThreatLevel.Secure;
             }
-            else if (clear(candidate) || visible(curr)) {
+            // 'Clear' if it currently fully visible (clear effect) or if the node through which the enemies reach it is at least travel-visible (i.e. enemies cannot reach without being spotted first).
+            else if (clear(candidate) || visible(nodeWeCameFrom)) {
                 candidateThreatLevel = ThreatLevel.Clear;
+            }
+            // 'Neutral' if it is over the threshold distance away, and not secure or clear
+            else if (curr.currCost + world.StaticState.DistanceReader()(nodeWeCameFrom, candidate) > NEUTRAL_DISTANCE_THRESHOLD && curr.currThreatLevel >= ThreatLevel.Neutral) {
+                candidateThreatLevel = ThreatLevel.Neutral;
+            }
+            // If we reach here, then there are no 'update conditions'. Thus, the candidateThreatLevel is the same as the node we arrived from; it propogates!
+            else {
+                candidateThreatLevel = curr.currThreatLevel;
             }
         }
     }
