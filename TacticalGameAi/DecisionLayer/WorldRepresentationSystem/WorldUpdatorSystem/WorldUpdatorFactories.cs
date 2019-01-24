@@ -32,6 +32,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                     new IEffectAdder[] {
                         new FullVisibilityBasedEffectAdder(EffectType.Clear),
                         new ControlBasedEffectAdder(EffectType.Controlled),
+                        new ControlBasedEffectAdder(EffectType.InfluencedByTeam),
                         new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToSquad),
                         new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToFriendlies)
                     }
@@ -41,6 +42,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                     new IEffectAdder[] {
                         new FullVisibilityBasedEffectAdder(EffectType.Clear),
                         new ControlBasedEffectAdder(EffectType.Controlled),
+                        new ControlBasedEffectAdder(EffectType.InfluencedByTeam),
                         new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToSquad),
                         new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToMe),
                         new AtLeastTravelVisibilityBasedEffectAdder(EffectType.VisibleToFriendlies)
@@ -51,6 +53,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldUpdatorSys
                     new IEffectAdder[] {
                         new FullVisibilityBasedEffectAdder(EffectType.VisibleToEnemies),
                         new ControlBasedEffectAdder(EffectType.ControlledByEnemy),
+                        new ControlBasedEffectAdder(EffectType.InfluencedByEnemy),
                     }
                 )
             );

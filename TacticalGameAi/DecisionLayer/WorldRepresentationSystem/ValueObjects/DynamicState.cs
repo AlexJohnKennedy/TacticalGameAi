@@ -192,6 +192,12 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         public Func<int, bool> IsClearReader() {
             return EffectTruthReaderFunction(EffectType.Clear);
         }
+        public Func<int, bool> IsInfluencedByTeamReader() {
+            return EffectTruthReaderFunction(EffectType.InfluencedByTeam);
+        }
+        public Func<int, bool> IsInfluencedByEnemyReader() {
+            return EffectTruthReaderFunction(EffectType.InfluencedByEnemy);
+        }
         public Func<int, bool> IsControlledByTeamReader() {
             return EffectTruthReaderFunction(EffectType.Controlled);
         }
@@ -228,6 +234,12 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
         }
         public Func<int, int, bool> CausingClearEffectReader() {
             return EdgeDataReaderFunction(EffectType.Clear);
+        }
+        public Func<int, int, bool> CausingInfluencedByTeamEffectReader() {
+            return EdgeDataReaderFunction(EffectType.InfluencedByTeam);
+        }
+        public Func<int, int, bool> CausingInfluencedByEnemyEffectReader() {
+            return EdgeDataReaderFunction(EffectType.InfluencedByEnemy);
         }
         public Func<int, int, bool> CausingControlledByTeamEffectReader() {
             return EdgeDataReaderFunction(EffectType.Controlled);
@@ -326,6 +338,12 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public IEnumerable<int> GetClearNodes() {
                 return EffectBasedConditionLoop(d.IsClearReader(), EffectType.Clear);
             }
+            public IEnumerable<int> GetInfluencedByTeamNodes() {
+                return EffectBasedConditionLoop(d.IsInfluencedByTeamReader(), EffectType.InfluencedByTeam);
+            }
+            public IEnumerable<int> GetInfluencedByEnemyNodes() {
+                return EffectBasedConditionLoop(d.IsInfluencedByEnemyReader(), EffectType.InfluencedByEnemy);
+            }
             public IEnumerable<int> GetControlledByTeamNodes() {
                 return EffectBasedConditionLoop(d.IsControlledByTeamReader(), EffectType.Controlled);
             }
@@ -397,6 +415,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private bool? isEnemyArea;
             private bool? isContestedArea;
             private bool? isClear;
+            private bool? isInfluencedByTeam;
+            private bool? isInfluencedByEnemy;
             private bool? isControlledByTeam;
             private bool? isControlledByEnemies;
             private bool? visibleToEnemies;
@@ -411,6 +431,18 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             private DynamicState d; // The data source parent object!
 
             // Public Properties which clients will use to query data about this node!
+            public bool InfluencedByTeam {
+                get {
+                    if (isInfluencedByTeam == null) { isInfluencedByTeam = d.IsInfluencedByTeamReader()(NodeId); }
+                    return isInfluencedByTeam.Value;
+                }
+            }
+            public bool InfluencedByEnemy {
+                get {
+                    if (isInfluencedByEnemy == null) { isInfluencedByEnemy = d.IsInfluencedByEnemyReader()(NodeId); }
+                    return isInfluencedByEnemy.Value;
+                }
+            }
             public bool SourceOfEnemyFire {
                 get {
                     if (sourceOfEnemyFire == null) { sourceOfEnemyFire = d.SourceOfEnemyFireReader()(NodeId); }
@@ -555,6 +587,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
             public int ToNodeId { get; }            // 'That' node (B)
 
             private bool? isCausingClearEffect;
+            private bool? isCausingInfluencedByTeamEffect;
+            private bool? isCausingInfluencedByEnemyEffect;
             private bool? isCausingControlledByTeamEffect;
             private bool? isCausingControlledByEnemiesEffect;
             private bool? isCausingVisibleToEnemiesEffect;
@@ -567,6 +601,18 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.ValueObjects {
 
             private DynamicState d;     // Parent from which we read data.
 
+            public bool IsCausingInfluencedByTeamEffect {
+                get {
+                    if (isCausingInfluencedByTeamEffect == null) isCausingInfluencedByTeamEffect = d.CausingInfluencedByTeamEffectReader()(FromNodeId, ToNodeId);
+                    return isCausingInfluencedByTeamEffect.Value;
+                }
+            }
+            public bool IsCausingInfluencedByEnemyEffect {
+                get {
+                    if (isCausingInfluencedByEnemyEffect == null) isCausingInfluencedByEnemyEffect = d.CausingInfluencedByEnemyEffectReader()(FromNodeId, ToNodeId);
+                    return isCausingInfluencedByEnemyEffect.Value;
+                }
+            }
             public bool IsCausingVisibleToSquadEffect {
                 get {
                     if (isCausingVisibleToSquadEffect == null) isCausingVisibleToSquadEffect = d.CausingVisibleToSquadEffectReader()(FromNodeId, ToNodeId);
@@ -666,7 +712,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
         
     }
     public enum EffectType {
+        /// <summary> Clear: Implies that someone you can communicate with can fully observe this area, and there are no enemies in the area! </summary>
         Clear,
+        /// <summary> InfluencedByTeam: Implies that our team is able to influence and impede enemies in this area if they are there </summary>
+        InfluencedByTeam,
+        /// <summary> Controlled: Implies that our team has the area secured, and enemies entering this area would be able to be influenced and impeded </summary>
         Controlled,
         VisibleToEnemies,
         VisibleToFriendlies,
@@ -674,6 +724,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
         VisibleToMe,
         PotentialEnemies,
         ControlledByEnemy,
+        InfluencedByEnemy,
         SourceOfEnemyFire
     }
 
@@ -693,20 +744,22 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
         static FactAndEffectRules() {
             effectsPrecludedByEffectTable = new HashSet<EffectType>[Enum.GetNames(typeof(EffectType)).Length];     // Number of EffectTypes
             effectsPrecludedByEffectTable[(int)EffectType.Clear] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
+            effectsPrecludedByEffectTable[(int)EffectType.InfluencedByTeam] = new HashSet<EffectType>(new EffectType[] { } );
             effectsPrecludedByEffectTable[(int)EffectType.Controlled] = new HashSet<EffectType>(new EffectType[] { } );
             effectsPrecludedByEffectTable[(int)EffectType.VisibleToSquad] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
             effectsPrecludedByEffectTable[(int)EffectType.VisibleToFriendlies] = new HashSet<EffectType>(new EffectType[] { } );
             effectsPrecludedByEffectTable[(int)EffectType.VisibleToMe] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies } );
             effectsPrecludedByEffectTable[(int)EffectType.ControlledByEnemy] = new HashSet<EffectType>(new EffectType[] { } );
+            effectsPrecludedByEffectTable[(int)EffectType.InfluencedByEnemy] = new HashSet<EffectType>(new EffectType[] { } );
             effectsPrecludedByEffectTable[(int)EffectType.VisibleToEnemies] = new HashSet<EffectType>(new EffectType[] { } );
             effectsPrecludedByEffectTable[(int)EffectType.PotentialEnemies] = new HashSet<EffectType>(new EffectType[] { } );
             effectsPrecludedByEffectTable[(int)EffectType.SourceOfEnemyFire] = new HashSet<EffectType>(new EffectType[] { } );
 
             effectsIncludedByFactTable = new HashSet<EffectType>[Enum.GetNames(typeof(FactType)).Length];    // Number of FactTypes
-            effectsIncludedByFactTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.VisibleToFriendlies });
-            effectsIncludedByFactTable[(int)FactType.SquadMemberPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.VisibleToSquad, EffectType.VisibleToFriendlies });
-            effectsIncludedByFactTable[(int)FactType.MyPosition] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.VisibleToSquad, EffectType.VisibleToMe, EffectType.VisibleToFriendlies });
-            effectsIncludedByFactTable[(int)FactType.EnemyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.VisibleToEnemies });
+            effectsIncludedByFactTable[(int)FactType.FriendlyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.VisibleToFriendlies, EffectType.InfluencedByTeam });
+            effectsIncludedByFactTable[(int)FactType.SquadMemberPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.InfluencedByTeam, EffectType.VisibleToSquad, EffectType.VisibleToFriendlies });
+            effectsIncludedByFactTable[(int)FactType.MyPosition] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.Controlled, EffectType.InfluencedByTeam, EffectType.VisibleToSquad, EffectType.VisibleToMe, EffectType.VisibleToFriendlies });
+            effectsIncludedByFactTable[(int)FactType.EnemyPresence] = new HashSet<EffectType>(new EffectType[] { EffectType.ControlledByEnemy, EffectType.VisibleToEnemies, EffectType.InfluencedByEnemy });
             effectsIncludedByFactTable[(int)FactType.TakingFire] = new HashSet<EffectType>(new EffectType[] { });
             effectsIncludedByFactTable[(int)FactType.TakingFireFromUnknownSource] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies });
             effectsIncludedByFactTable[(int)FactType.LastKnownEnemyPosition] = new HashSet<EffectType>(new EffectType[] { EffectType.PotentialEnemies });
@@ -726,8 +779,10 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
             effectsWhichPrecludeTable[(int)EffectType.PotentialEnemies] = new HashSet<EffectType>(new EffectType[] { EffectType.Clear, EffectType.VisibleToSquad, EffectType.VisibleToMe });
             effectsWhichPrecludeTable[(int)EffectType.Clear] = new HashSet<EffectType>(new EffectType[] { });
             effectsWhichPrecludeTable[(int)EffectType.Controlled] = new HashSet<EffectType>(new EffectType[] { });
+            effectsWhichPrecludeTable[(int)EffectType.InfluencedByTeam] = new HashSet<EffectType>(new EffectType[] { });
             effectsWhichPrecludeTable[(int)EffectType.VisibleToEnemies] = new HashSet<EffectType>(new EffectType[] { });
             effectsWhichPrecludeTable[(int)EffectType.ControlledByEnemy] = new HashSet<EffectType>(new EffectType[] { });
+            effectsWhichPrecludeTable[(int)EffectType.InfluencedByEnemy] = new HashSet<EffectType>(new EffectType[] { });
             effectsWhichPrecludeTable[(int)EffectType.VisibleToFriendlies] = new HashSet<EffectType>(new EffectType[] { });
             effectsWhichPrecludeTable[(int)EffectType.VisibleToSquad] = new HashSet<EffectType>(new EffectType[] { });
             effectsWhichPrecludeTable[(int)EffectType.VisibleToMe] = new HashSet<EffectType>(new EffectType[] { });
@@ -737,9 +792,11 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
             factsWhichIncludeTable[(int)EffectType.PotentialEnemies] = new HashSet<FactType>(new FactType[] { FactType.TakingFireFromUnknownSource, FactType.LastKnownEnemyPosition });
             factsWhichIncludeTable[(int)EffectType.Clear] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition });
             factsWhichIncludeTable[(int)EffectType.Controlled] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition });
+            factsWhichIncludeTable[(int)EffectType.InfluencedByTeam] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition, FactType.FriendlyPresence });
             factsWhichIncludeTable[(int)EffectType.VisibleToEnemies] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
             factsWhichIncludeTable[(int)EffectType.VisibleToFriendlies] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence , FactType.MyPosition, FactType.SquadMemberPresence });
             factsWhichIncludeTable[(int)EffectType.ControlledByEnemy] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
+            factsWhichIncludeTable[(int)EffectType.InfluencedByEnemy] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
             factsWhichIncludeTable[(int)EffectType.VisibleToSquad] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition });
             factsWhichIncludeTable[(int)EffectType.VisibleToMe] = new HashSet<FactType>(new FactType[] { FactType.MyPosition });
             factsWhichIncludeTable[(int)EffectType.SourceOfEnemyFire] = new HashSet<FactType>(new FactType[] { });
@@ -748,12 +805,14 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.DynamicStateHid
             factsWhichPrecludeTable[(int)EffectType.PotentialEnemies] = new HashSet<FactType>(new FactType[] { FactType.SquadMemberPresence, FactType.MyPosition });
             factsWhichPrecludeTable[(int)EffectType.Clear] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
             factsWhichPrecludeTable[(int)EffectType.Controlled] = new HashSet<FactType>(new FactType[] { FactType.EnemyPresence });
+            factsWhichPrecludeTable[(int)EffectType.InfluencedByTeam] = new HashSet<FactType>(new FactType[] { });
             factsWhichPrecludeTable[(int)EffectType.VisibleToEnemies] = new HashSet<FactType>(new FactType[] {  });
             factsWhichPrecludeTable[(int)EffectType.VisibleToFriendlies] = new HashSet<FactType>(new FactType[] {  });
             factsWhichPrecludeTable[(int)EffectType.VisibleToMe] = new HashSet<FactType>(new FactType[] {  });
             factsWhichPrecludeTable[(int)EffectType.VisibleToSquad] = new HashSet<FactType>(new FactType[] {  });
             factsWhichPrecludeTable[(int)EffectType.SourceOfEnemyFire] = new HashSet<FactType>(new FactType[] {  });
             factsWhichPrecludeTable[(int)EffectType.ControlledByEnemy] = new HashSet<FactType>(new FactType[] { FactType.FriendlyPresence, FactType.MyPosition, FactType.SquadMemberPresence });
+            factsWhichPrecludeTable[(int)EffectType.InfluencedByEnemy] = new HashSet<FactType>(new FactType[] {  });
         }
 
         public static HashSet<EffectType> GetEffectsPrecludedByEffect(EffectType e) {
