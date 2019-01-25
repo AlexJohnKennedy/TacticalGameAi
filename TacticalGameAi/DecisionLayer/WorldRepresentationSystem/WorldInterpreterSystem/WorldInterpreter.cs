@@ -24,16 +24,14 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
         }
 
         private class TraversalNode {
-            public int areaNodeId;
-            public ThreatLevel currThreatLevel;
-            public float currCost;
-            public int predArea;
+            public int id;
+            public int prev;
+            public float cost;
 
-            public TraversalNode(int areaNodeId, ThreatLevel currThreatLevel, float currCost, int predArea) {
-                this.areaNodeId = areaNodeId;
-                this.currThreatLevel = currThreatLevel;
-                this.currCost = currCost;
-                this.predArea = predArea;
+            public TraversalNode(int id, int prev, float cost) {
+                this.id = id;
+                this.prev = prev;
+                this.cost = cost;
             }
         }
 
@@ -42,8 +40,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
             // Lists of nodes to populate via traversal, as a scale of threat severity.
             // ************************************************************************
 
-            ThreatLevel[] exploredSet = new ThreatLevel[world.NumberOfNodes];
-            for (int i=0; i<world.NumberOfNodes; i++) exploredSet[i] = ThreatLevel.Unchecked;
+            ThreatLevel[] exploredThreat = new ThreatLevel[world.NumberOfNodes];
+            for (int i=0; i<world.NumberOfNodes; i++) exploredThreat[i] = ThreatLevel.Unchecked;
 
             // *** SEVERE THREAT ***
             HashSet<int> knownThreats = new HashSet<int>();
@@ -90,61 +88,126 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
 
             // Complete a search from each 'starting point'. We will Djikstra search based on traversal distances from each point.
             foreach (int startArea in threatSearchStartPoints) {
-                SimplePriorityQueue<TraversalNode, float> searchQueue = new SimplePriorityQueue<TraversalNode, float>();
-                TraversalNode startPoint = new TraversalNode(startArea, ThreatLevel.PotentialThreat, 0, -1);
-                searchQueue.Enqueue(startPoint, 0);
-                exploredSet[startArea] = ThreatLevel.PotentialThreat;
-                while (searchQueue.Count > 0) {
-                    TraversalNode curr = searchQueue.Dequeue();
-
-                    // Check to see if the current traversal node is out of date
-                    if (curr.currThreatLevel < exploredSet[curr.areaNodeId]) continue;
-
-                    // Examine all traversable nodes.
-                    foreach (int candidate in s.GetTraversableNodes(curr.areaNodeId)) {
-                        // If the known threat level of the candidate node is higher or equal to the current node, we cannot go further.
-                        // If the known threat level of the candidate node is lower than the current node, we have the potential to promote it's threat level higher.
-                        // Note that completely unexplored nodes have an effective threat level of zero, thus will always be expanded.
-                        if (exploredSet[candidate] < exploredSet[curr.areaNodeId]) {
-                            DetermineCandidateThreatLevel(candidate, curr, world, out exploredSet[candidate]);
-                            searchQueue.Enqueue(new TraversalNode(candidate, exploredSet[candidate], curr.currCost + s.GetEdge(curr.areaNodeId, candidate).Distance, curr.areaNodeId), curr.currCost + s.GetEdge(curr.areaNodeId, candidate).Distance);
-                        }
-                    }
+                bool[] selfDetermined = new bool[world.NumberOfNodes];
+                int[] traversalPredecessor = new int[world.NumberOfNodes];
+                int[] threatLevelSource = new int[world.NumberOfNodes];
+                for (int i=0; i<world.NumberOfNodes; i++) {
+                    selfDetermined[i] = false;
+                    traversalPredecessor[i] = -1;
+                    threatLevelSource[i] = -1;
                 }
+                SearchFrom(world, startArea, exploredThreat, selfDetermined, traversalPredecessor, threatLevelSource);
+
+                // Populate global Data structures.
             }
             foreach (int n in d.NodeSetQueryObject.GetEnemyPresenceNodes()) {
-                exploredSet[n] = ThreatLevel.KnownThreat;
+                exploredThreat[n] = ThreatLevel.KnownThreat;
             }
 
 
 
             return null;
         }
+        
+        private void SearchFrom(WorldRepresentation world, int startPoint, ThreatLevel[] exploredThreat, bool[] selfDetermined, int[] traversalPredecessor, int[] threatLevelSource) {
+            Queue<TraversalNode> frontier = new Queue<TraversalNode>();
 
-        private void DetermineCandidateThreatLevel(int candidate, TraversalNode curr, WorldRepresentation world, out ThreatLevel candidateThreatLevel) {
+            //Always expand the first node: Set it up properly
+            selfDetermined[startPoint] = true;
+            threatLevelSource[startPoint] = startPoint;
+            exploredThreat[startPoint] = ThreatLevel.PotentialThreat;   // Searches start at this priority level.
+            traversalPredecessor[startPoint] = -1;
+            foreach (int reachable in world.StaticState.GetTraversableNodes(startPoint)) {
+                // TODO: 9 - add distance cost coefficients/modifiers depending on whether the traversability is walkable, vaultable, crawlable, climbable (latter ones are 'slower' so higher cost)
+                frontier.Enqueue(new TraversalNode(reachable, startPoint, GetTraversalCost(startPoint, reachable, world)));
+            }
+
+            while (frontier.Count > 0) {
+                TraversalNode curr = frontier.Dequeue();
+
+                // Expand this node if and only if we have the potential to 'promote' this current node's threat level based on propogation from the previous one!
+                if (exploredThreat[curr.prev] > exploredThreat[curr.id]) {
+                    Expand(world, curr, frontier, exploredThreat, selfDetermined, traversalPredecessor, threatLevelSource);
+                }
+            }
+        }
+
+        private void Expand(WorldRepresentation world, TraversalNode curr, Queue<TraversalNode> frontier, ThreatLevel[] exploredThreat, bool[] selfDetermined, int[] traversalPredecessor, int[] threatLevelSource) {
+            // Check if there is no need to propogate further; this is true if this current node has special World States which means it determines it's own threat level, i.e. cleared by teammate, and we have already searched from here before!
+            if (selfDetermined[curr.id] && exploredThreat[curr.id] <= exploredThreat[curr.prev]) {
+                return;
+            }
+
+            // Check to see if the current areaNode demotes the current threat level based on State qualities, and determine if it is a 'specialDetermined' case.
+            ThreatLevel? stateDeterminedThreatLevel = null;
+            
+            CheckState(world, curr, out stateDeterminedThreatLevel, out selfDetermined[curr.id]);
+
+            // If some state condition determined a threat level demotion, apply it if and only if it is LOWER than the propogated threat level!
+            if (stateDeterminedThreatLevel.HasValue && stateDeterminedThreatLevel.Value < exploredThreat[curr.prev]) {
+                exploredThreat[curr.id] = stateDeterminedThreatLevel.Value;
+
+                // If it is self determined, then the traversal predecessor needs to be reset to this point! This is because no predecessor is determining the state via propogation.
+                if (selfDetermined[curr.id]) {
+                    traversalPredecessor[curr.id] = -1;     // This is it's own source of threat level status, based on special conditions!
+                    threatLevelSource[curr.id] = curr.id;
+                }
+                else {
+                    traversalPredecessor[curr.id] = curr.prev;  // This node's threat level is contingent upon the predecessor in the traversal!
+                    threatLevelSource[curr.id] = curr.prev;
+                }
+            }
+            // Propogate the threat level instead.
+            else {
+                exploredThreat[curr.id] = (exploredThreat[curr.prev] > ThreatLevel.Neutral && curr.cost > NEUTRAL_DISTANCE_THRESHOLD) ? ThreatLevel.Neutral : exploredThreat[curr.prev];
+                traversalPredecessor[curr.id] = curr.prev;
+                threatLevelSource[curr.id] = threatLevelSource[curr.prev];
+            }
+
+            // Finally, add all the traversable nodes to the frontier for future expansion in the search
+            foreach (int reachable in world.StaticState.GetTraversableNodes(curr.id)) {
+                frontier.Enqueue(new TraversalNode(reachable, curr.id, curr.cost + GetTraversalCost(curr.id, reachable, world)));
+            }
+        }
+
+        private void CheckState(WorldRepresentation world, TraversalNode curr, out ThreatLevel? stateDeterminedThreatLevel, out bool selfDetermined) {
             // Do a series of checks to determine what the threat level should be, based on the world representation.
             Func<int, bool> controlledByTeam = world.DynamicState.IsControlledByTeamReader();
             Func<int, bool> influencedByTeam = world.DynamicState.IsInfluencedByTeamReader();
             Func<int, bool> clear   = world.DynamicState.IsClearReader();
             Func<int, bool> visible = world.DynamicState.VisibleToSquadReader();
-            int nodeWeCameFrom = curr.areaNodeId;
+            
             // This node we are exploring is deemed:
-            // 'Secure' if it is controlled, or if the node through which the enemies reach it is at least influenced.
-            if (influencedByTeam(nodeWeCameFrom) || controlledByTeam(candidate)) {
-                candidateThreatLevel = ThreatLevel.Secure;
+            // 'Secure' if it is controlled, in which case it is also 'self determined'.
+            if (controlledByTeam(curr.id)) {
+                stateDeterminedThreatLevel = ThreatLevel.Secure;
+                selfDetermined = true;
             }
-            // 'Clear' if it currently fully visible (clear effect) or if the node through which the enemies reach it is at least travel-visible (i.e. enemies cannot reach without being spotted first).
-            else if (clear(candidate) || visible(nodeWeCameFrom)) {
-                candidateThreatLevel = ThreatLevel.Clear;
+            // 'Secure' if the node we came from is at least influenced, but not selfDetermined;
+            else if (influencedByTeam(curr.prev)) {
+                stateDeterminedThreatLevel = ThreatLevel.Secure;
+                selfDetermined = false;
             }
-            // 'Neutral' if it is over the threshold distance away, and not secure or clear
-            else if (curr.currCost + world.StaticState.DistanceReader()(nodeWeCameFrom, candidate) > NEUTRAL_DISTANCE_THRESHOLD && curr.currThreatLevel >= ThreatLevel.Neutral) {
-                candidateThreatLevel = ThreatLevel.Neutral;
+            // 'Clear' if it currently fully visible (clear effect), and this means it's self determined
+            else if (clear(curr.id)) {
+                stateDeterminedThreatLevel = ThreatLevel.Clear;
+                selfDetermined = true;
             }
-            // If we reach here, then there are no 'update conditions'. Thus, the candidateThreatLevel is the same as the node we arrived from; it propogates!
+            // 'Clear if the node we came from is at least travel visible, however this means it is not self determined
+            else if (visible(curr.prev)) {
+                stateDeterminedThreatLevel = ThreatLevel.Clear;
+                selfDetermined = false;
+            }
+            // If none of the previous conditions are met, then the status is propogated from the previous node!
             else {
-                candidateThreatLevel = curr.currThreatLevel;
+                stateDeterminedThreatLevel = null;
+                selfDetermined = false;
             }
+        }
+
+        private float GetTraversalCost(int from, int to, WorldRepresentation world) {
+            // TODO: 9 - add distance cost coefficients/modifiers depending on whether the traversability is walkable, vaultable, crawlable, climbable (latter ones are 'slower' so higher cost)
+            return world.StaticState.DistanceReader()(from, to);
         }
     }
 }
