@@ -103,16 +103,38 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
                 exploredThreat[n] = ThreatLevel.KnownThreat;
             }
 
+            // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            // TODO: 10 - Calculate the post-traversal qualities based on Dynamic and Static state conditions, such as Active Thrests, engagements, suppressed threats, etc.
+            // TODO: 10 - Calculate the post-traversal qualities based on Dynamic and Static state conditions, such as Active Thrests, engagements, suppressed threats, etc.
+            // TODO: 10 - Calculate the post-traversal qualities based on Dynamic and Static state conditions, such as Active Thrests, engagements, suppressed threats, etc.
+            // TODO: 10 - Calculate the post-traversal qualities based on Dynamic and Static state conditions, such as Active Thrests, engagements, suppressed threats, etc.
+            // TODO: 10 - Calculate the post-traversal qualities based on Dynamic and Static state conditions, such as Active Thrests, engagements, suppressed threats, etc.
+            // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
             // Populate global Data structures.
             for (int i=0; i < world.NumberOfNodes; i++) {
                 // Case by case; depending on the determined threat level for that node.
-                if (exploredThreat[i] == ThreatLevel.KnownThreat) {
+                if (exploredThreat[i] == ThreatLevel.ActiveThreat) {
+                    activeThreats.Add(i);
+                }
+                else if (exploredThreat[i] == ThreatLevel.KnownThreat) {
                     knownThreats.Add(i);
                 }
                 else if (exploredThreat[i] == ThreatLevel.PotentialThreat) {
                     potentialThreats.Add(i);
                     closestThreatReachabilityPredecessor.Add(i, (traversalPredecessor[i] == -1) ? i : traversalPredecessor[i]); // If i'th node has a threat predecessor, that's the closest one. Else, itself.
                     potentialThreatSourceEdges.Add(i, new HashSet<int>(threatLevelSource[i]));      // Enumerates all the 'source nodes' which can cause this node to be a potential threat
+                }
+                else if (exploredThreat[i] == ThreatLevel.Neutral) {
+                    neutrals.Add(i);
+                }
+                else if (exploredThreat[i] == ThreatLevel.Clear) {
+                    clear.Add(i);
+                    clearSourceEdges.Add(i, new HashSet<int>(threatLevelSource[i]));
+                }
+                else if (exploredThreat[i] == ThreatLevel.Secure) {
+                    secure.Add(i);
+                    secureSourceEdges.Add(i, new HashSet<int>(threatLevelSource[i]));
                 }
             }
 
