@@ -49,7 +49,7 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
 
             HashSet<int> potentialThreats = new HashSet<int>();
             Dictionary<int, HashSet<int>> potentialThreatSourceEdges = new Dictionary<int, HashSet<int>>();   // Edge data to specify which known threats or enemy origin points are the enemies which 'could reach here'
-            Dictionary<int, HashSet<int>> potentialThreatReachabilityPredecessors = new Dictionary<int, HashSet<int>>();   // Edge data to specify which areas a potential threat could come from directly. (traversable nodes)
+            Dictionary<int, int> closestThreatReachabilityPredecessor = new Dictionary<int, int>();           // Edge data to specify which traversable node the closest enemy will arive from, if they went the fastest way.
 
             HashSet<int> neutrals = new HashSet<int>();
 
@@ -99,10 +99,21 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
             }
             SimultaneousSearch(world, threatSearchStartPoints, exploredThreat, selfDetermined, traversalPredecessor, threatLevelSource);
 
-            // Populate global Data structures. Now, global structures
-
             foreach (int n in enemyPresenceNodes) {
                 exploredThreat[n] = ThreatLevel.KnownThreat;
+            }
+
+            // Populate global Data structures.
+            for (int i=0; i < world.NumberOfNodes; i++) {
+                // Case by case; depending on the determined threat level for that node.
+                if (exploredThreat[i] == ThreatLevel.KnownThreat) {
+                    knownThreats.Add(i);
+                }
+                else if (exploredThreat[i] == ThreatLevel.PotentialThreat) {
+                    potentialThreats.Add(i);
+                    closestThreatReachabilityPredecessor.Add(i, (traversalPredecessor[i] == -1) ? i : traversalPredecessor[i]); // If i'th node has a threat predecessor, that's the closest one. Else, itself.
+                    potentialThreatSourceEdges.Add(i, new HashSet<int>(threatLevelSource[i]));      // Enumerates all the 'source nodes' which can cause this node to be a potential threat
+                }
             }
 
 
@@ -111,7 +122,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
         }
 
         private void SimultaneousSearch(WorldRepresentation world, IEnumerable<int> threatSearchStartPoints, ThreatLevel[] exploredThreat, bool[] selfDetermined, int[] traversalPredecessor, List<int>[] threatLevelSource) {
-            Queue<TraversalNode> frontier = new Queue<TraversalNode>();
+            SimplePriorityQueue<TraversalNode> frontier = new SimplePriorityQueue<TraversalNode>();     // Dijkstra Search
+            // Queue<TraversalNode> frontier = new Queue<TraversalNode>();      // BFS
 
             // Always expand the first node(s): Set it up properly.
             // Add all the neighbours of all the start points into the frontier set simultaneously! :OO
@@ -135,18 +147,19 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
             }
         }
 
-        private void StartPointSetup(int startPoint, WorldRepresentation world, Queue<TraversalNode> frontier, ThreatLevel[] exploredThreat, bool[] selfDetermined, int[] traversalPredecessor, List<int>[] threatLevelSource) {
+        private void StartPointSetup(int startPoint, WorldRepresentation world, SimplePriorityQueue<TraversalNode> frontier, ThreatLevel[] exploredThreat, bool[] selfDetermined, int[] traversalPredecessor, List<int>[] threatLevelSource) {
             selfDetermined[startPoint] = true;
             threatLevelSource[startPoint].Add(startPoint);
             exploredThreat[startPoint] = ThreatLevel.PotentialThreat;   // Searches start at this priority level.
             traversalPredecessor[startPoint] = -1;
             foreach (int reachable in world.StaticState.GetTraversableNodes(startPoint)) {
                 // TODO: 9 - add distance cost coefficients/modifiers depending on whether the traversability is walkable, vaultable, crawlable, climbable (latter ones are 'slower' so higher cost)
-                frontier.Enqueue(new TraversalNode(reachable, startPoint, GetTraversalCost(startPoint, reachable, world)));
+                float cost = GetTraversalCost(startPoint, reachable, world);
+                frontier.Enqueue(new TraversalNode(reachable, startPoint, cost), cost);
             }
         }
 
-        private void Expand(WorldRepresentation world, TraversalNode curr, Queue<TraversalNode> frontier, ThreatLevel[] exploredThreat, bool[] selfDetermined, int[] traversalPredecessor, List<int>[] threatLevelSource) {
+        private void Expand(WorldRepresentation world, TraversalNode curr, SimplePriorityQueue<TraversalNode> frontier, ThreatLevel[] exploredThreat, bool[] selfDetermined, int[] traversalPredecessor, List<int>[] threatLevelSource) {
             // Check if there is no need to propogate further; this is true if this current node has special World States which means it determines it's own threat level, i.e. cleared by teammate, and we have already searched from here before!
             if (selfDetermined[curr.id] && exploredThreat[curr.id] <= exploredThreat[curr.prev]) {
                 return;
@@ -187,7 +200,8 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
 
             // Finally, add all the traversable nodes to the frontier for future expansion in the search
             foreach (int reachable in world.StaticState.GetTraversableNodes(curr.id)) {
-                frontier.Enqueue(new TraversalNode(reachable, curr.id, curr.cost + GetTraversalCost(curr.id, reachable, world)));
+                float cost = curr.cost + GetTraversalCost(curr.id, reachable, world);
+                frontier.Enqueue(new TraversalNode(reachable, curr.id, cost), cost);
             }
         }
 
