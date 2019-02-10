@@ -99,8 +99,15 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
             }
             SimultaneousSearch(world, threatSearchStartPoints, exploredThreat, selfDetermined, traversalPredecessor, threatLevelSource);
 
+            // Determine known and active threat status for all positions where we know enemies currently are!
             foreach (int n in enemyPresenceNodes) {
-                exploredThreat[n] = ThreatLevel.KnownThreat;
+                if (CheckActive(n, world)) {
+                    exploredThreat[n] = ThreatLevel.ActiveThreat;
+                    targetsOfActiveThreatEdges[n] = CalculateTargetOfActiveThreatSet(n, world);
+                }
+                else {
+                    exploredThreat[n] = ThreatLevel.KnownThreat;
+                }
             }
 
             // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -265,6 +272,23 @@ namespace TacticalGameAi.DecisionLayer.WorldRepresentationSystem.WorldInterprete
         private float GetTraversalCost(int from, int to, WorldRepresentation world) {
             // TODO: 9 - add distance cost coefficients/modifiers depending on whether the traversability is walkable, vaultable, crawlable, climbable (latter ones are 'slower' so higher cost)
             return world.StaticState.DistanceReader()(from, to);
+        }
+
+        private bool CheckActive(int node, WorldRepresentation world) {
+            // The node is active if and only if it is a current source of enemy fire.
+            return world.DynamicState.SourceOfEnemyFireReader()(node);
+        }
+
+        // Assumes that 'node' is indeed an Active Threat. Use CheckActive() to ensure this is true before using this method.
+        private HashSet<int> CalculateTargetOfActiveThreatSet(int node, WorldRepresentation world) {
+            HashSet<int> toRet = new HashSet<int>();
+            Func<int, int, bool> reader = world.DynamicState.CausingTakingFireEffectReader();
+            foreach (int potential in world.DynamicState.NodeSetQueryObject.GetNodesTakingFireFromKnownSource()) {
+                if (reader(node, potential)) {
+                    toRet.Add(potential);
+                }
+            }
+            return toRet;
         }
     }
 }
